@@ -120,8 +120,17 @@ class ProfiletoolMapToolRenderer():
                     self.profiletool.rubberband.reset(self.profiletool.polygon)
                     self.profiletool.rubberbandbuf.reset()
                 self.pointstoDraw += newPoints
-        if self.profiletool.dockwidget.selectionmethod == 1:
-            result = SelectLineTool().getPointTableFromSelectedLine(self.iface, self.tool, newPoints, self.layerindex, self.previousLayer , self.pointstoDraw)
+        if self.profiletool.dockwidget.selectionmethod in (1, 2):
+            if self.profiletool.dockwidget.selectionmethod == 1:
+                method = "feature"
+                message = self.textquit1
+            else:
+                method = "layer"
+                message = self.textquit2
+            result = SelectLineTool(
+                    selectionMethod=method).getPointTableFromSelectedLine(
+                            self.iface, self.tool, newPoints, self.layerindex,
+                            self.previousLayer , self.pointstoDraw)
             self.pointstoDraw = result[0]
             self.layerindex = result[1]
             self.previousLayer = result[2]
@@ -129,19 +138,7 @@ class ProfiletoolMapToolRenderer():
             self.profiletool.calculateProfil(self.pointstoDraw, False)
             self.lastFreeHandPoints = self.pointstoDraw
             self.pointstoDraw = []
-            self.iface.mainWindow().statusBar().showMessage(self.textquit1)
-        elif self.profiletool.dockwidget.selectionmethod == 2:
-            result = SelectLineTool(
-                    selectionMethod="layer").getPointTableFromSelectedLine(
-                            self.iface, self.tool, newPoints, self.layerindex, 
-                            self.previousLayer , self.pointstoDraw)
-            self.pointstoDraw = result[0]
-            self.layerindex = result[1]
-            self.previousLayer = result[2]
-            self.profiletool.calculateProfil(self.pointstoDraw, False)
-            self.lastFreeHandPoints = self.pointstoDraw
-            self.pointstoDraw = []
-            self.iface.mainWindow().statusBar().showMessage(self.textquit2)
+            self.iface.mainWindow().statusBar().showMessage(message)
            
     def doubleClicked(self,position):
         if self.profiletool.dockwidget.selectionmethod == 0:
