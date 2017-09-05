@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 #-----------------------------------------------------------
-# 
+#
 # Profile
 # Copyright (C) 2012  Patrice Verchere
 #-----------------------------------------------------------
-# 
+#
 # licensed under the terms of GNU GPL 2
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License along
 # with this progsram; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-# 
+#
 #---------------------------------------------------------------------
 import qgis
 from qgis.core import *
@@ -36,6 +36,10 @@ except:
 
 
 class SelectLineTool:
+    def __init__(self, selectionMethod="feature"):
+        """Selection mode can be feature or layer."""
+        self.selectionMethod = selectionMethod
+
     def getPointTableFromSelectedLine(self, iface, tool, newPoints, layerindex, previousLayer, pointstoDraw ):
         pointstoDraw = []
         #self.previousLayer = previousLayer1
@@ -49,30 +53,34 @@ class SelectLineTool:
         # get the point coordinates in the layer's CRS
         point = tool.toLayerCoordinates(layer, QgsPointXY(newPoints[0][0],newPoints[0][1]))
 
-        closestFeature = self.select_closest_feature(
-                iface, layer, layerindex, previousLayer, point)
-        
-        if closestFeature:
+        if self.selectionMethod == "feature":
+            closestFeatures = self.select_closest_feature(
+                    iface, layer, layerindex, previousLayer, point)
+        elif self.selectionMethod == "layer":
+            closestFeatures = self.select_layer_features(
+                    iface, layer, layerindex, previousLayer, point)
+
+        if closestFeatures:
             previousLayer = layer
             iface.mainWindow().statusBar().showMessage("selectline")
             layer.removeSelection()
-            
-            #closest
-            #closestFeature = layer.getFeatures(QgsFeatureRequest(featureId)).next()
-            layer.select( closestFeature.id() )
-            k = 0
-            while not closestFeature.geometry().vertexAt(k) == QgsPoint(0,0):
-                point2 = tool.toMapCoordinates(layer, closestFeature.geometry().vertexAt(k) )
-                pointstoDraw += [[point2.x(),point2.y()]]
-                k += 1
-                # replicate last point (bug #6680)
-                if k > 0 :
+            layer.select([f.id() for f in closestFeatures])
+            for closestFeature in closestFeatures:
+                k = 0
+                while not closestFeature.geometry().vertexAt(k) == QgsPoint(0,0):
+                    point2 = tool.toMapCoordinates(
+                            layer,
+                            QgsPointXY(closestFeature.geometry().vertexAt(k)))
                     pointstoDraw += [[point2.x(),point2.y()]]
+                    k += 1
+                    # replicate last point (bug #6680)
+                    if k > 0 :
+                        pointstoDraw += [[point2.x(),point2.y()]]
         return [pointstoDraw, layerindex, previousLayer]
 
     @staticmethod
     def select_closest_feature(iface, layer, layerindex, previousLayer, point):
-                
+
         if layerindex == None or layer != previousLayer:
             # there's no previously created index or it's not the same layer,
             # then create the index
@@ -87,7 +95,7 @@ class SelectLineTool:
         nearest = layerindex.nearestNeighbor( point, 1 )
         featureId = nearest[0] if len(nearest) > 0 else None
         closestFeature = QgsFeature()
-        
+
         try:    #qgis2
             if featureId == None or layer.getFeatures(QgsFeatureRequest(featureId)).next() == False:
                 closestFeature = None
@@ -96,8 +104,8 @@ class SelectLineTool:
             f = QgsFeature()
             if featureId == None or layer.getFeatures(QgsFeatureRequest(featureId)).nextFeature(f) == False:
                 closestFeature = None
-        
-        
+
+
         try:    #qgis2
             if layer.geometryType() != QGis.Line and closestFeature != None:
                 QMessageBox.warning( iface.mainWindow(), "Closest Feature Finder", "No vector layers selected" )
@@ -112,18 +120,18 @@ class SelectLineTool:
         except: #qgis
             if layer.geometryType() != qgis.core.QgsWkbTypes.PointGeometry :
                 booltemp = True
-        
+
         if booltemp and closestFeature != None:
             # find the furthest bounding box borders
             try:    #qgis2
                 closestFeature = layer.getFeatures(QgsFeatureRequest(featureId)).next()
                 rect = closestFeature.geometry().boundingBox()
-            except: #qgis3 
+            except: #qgis3
                 f = QgsFeature()
                 closestFeature = layer.getFeatures(QgsFeatureRequest(featureId)).nextFeature(f)
                 rect = f.geometry().boundingBox()
-            
-            
+
+
             dist_pX_rXmax = abs( point.x() - rect.xMaximum() )
             dist_pX_rXmin = abs( point.x() - rect.xMinimum() )
             if dist_pX_rXmax > dist_pX_rXmin:
@@ -144,9 +152,9 @@ class SelectLineTool:
             rect.setXMaximum( point.x() + width )
             rect.setYMinimum( point.y() - height )
             rect.setYMaximum( point.y() + height )
-            
+
             # retrieve all geometries into the search rectangle
-            
+
             iter2 = layer.getFeatures(QgsFeatureRequest(rect))
             # find the nearest feature
             minDist = -1
@@ -172,21 +180,16 @@ class SelectLineTool:
                 if featureId == None or layer.getFeatures(QgsFeatureRequest(featureId)).nextFeature(f) == False:
                     closestFeature = None
 
-        previousLayer = layer
-        iface.mainWindow().statusBar().showMessage("selectline")
-        layer.removeSelection()
-        
-        #closest
-        #closestFeature = layer.getFeatures(QgsFeatureRequest(featureId)).next()
-        layer.select( closestFeature.id() )
-        k = 0
-        while not closestFeature.geometry().vertexAt(k) == QgsPoint(0,0):
-            point2 = tool.toMapCoordinates(layer, QgsPointXY(
-                closestFeature.geometry().vertexAt(k)))
-            pointstoDraw += [[point2.x(),point2.y()]]
-            k += 1
-            # replicate last point (bug #6680)
-            if k > 0 :
-                pointstoDraw += [[point2.x(),point2.y()]]
-        return [pointstoDraw, layerindex, previousLayer]
+        return [closestFeature] if closestFeature else []
 
+    @staticmethod
+    def select_layer_features(iface, layer, layerindex, previousLayer, point):
+        """Returns a list with all the features in layer.
+
+        iface, layerindex, previousLayer, point are unused, kept to use
+        the same functio ninterface as select_closest_feature.
+        """
+        feats = []
+        for f in layer.getFeatures():
+            feats.append(f)
+        return feats

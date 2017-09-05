@@ -52,8 +52,9 @@ class ProfiletoolMapToolRenderer():
         
         
         self.textquit0 = "Click for polyline and double click to end (right click to cancel then quit)"
-        self.textquit1 = "Select the polyline in a vector layer (Right click to quit)"
-        
+        self.textquit1 = "Select the polyline feature in a vector layer (Right click to quit)"
+        self.textquit2 = "Select the polyline vector layer (Right click to quit)"
+
         self.layerindex = None                            #for selection mode
         self.previousLayer = None                        #for selection mode
     
@@ -95,7 +96,7 @@ class ProfiletoolMapToolRenderer():
                 self.profiletool.rubberbandpoint.hide()
             else:
                 self.cleaning()
-        if self.profiletool.dockwidget.selectionmethod == 1:
+        if self.profiletool.dockwidget.selectionmethod in (1, 2):
             try:
                 self.previousLayer.removeSelection( False )
             except:
@@ -129,7 +130,19 @@ class ProfiletoolMapToolRenderer():
             self.lastFreeHandPoints = self.pointstoDraw
             self.pointstoDraw = []
             self.iface.mainWindow().statusBar().showMessage(self.textquit1)
-
+        elif self.profiletool.dockwidget.selectionmethod == 2:
+            result = SelectLineTool(
+                    selectionMethod="layer").getPointTableFromSelectedLine(
+                            self.iface, self.tool, newPoints, self.layerindex, 
+                            self.previousLayer , self.pointstoDraw)
+            self.pointstoDraw = result[0]
+            self.layerindex = result[1]
+            self.previousLayer = result[2]
+            self.profiletool.calculateProfil(self.pointstoDraw, False)
+            self.lastFreeHandPoints = self.pointstoDraw
+            self.pointstoDraw = []
+            self.iface.mainWindow().statusBar().showMessage(self.textquit2)
+           
     def doubleClicked(self,position):
         if self.profiletool.dockwidget.selectionmethod == 0:
             #Validation of line
@@ -145,7 +158,7 @@ class ProfiletoolMapToolRenderer():
             #temp point to distinct leftclick and dbleclick
             self.dblclktemp = newPoints
             self.iface.mainWindow().statusBar().showMessage(self.textquit0)
-        if self.profiletool.dockwidget.selectionmethod == 1:
+        if self.profiletool.dockwidget.selectionmethod in (1, 2):
             return
             
             
@@ -177,6 +190,8 @@ class ProfiletoolMapToolRenderer():
             self.iface.mainWindow().statusBar().showMessage(self.textquit0)
         elif self.profiletool.dockwidget.selectionmethod == 1:
             self.iface.mainWindow().statusBar().showMessage(self.textquit1)
+        elif self.profiletool.dockwidget.selectionmethod == 2:
+            self.iface.mainWindow().statusBar().showMessage(self.textquit2)
 
 
     def deactivate(self):        #enable clean exit of the plugin
