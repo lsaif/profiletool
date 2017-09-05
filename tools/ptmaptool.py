@@ -138,7 +138,19 @@ class ProfiletoolMapToolRenderer():
             self.profiletool.calculateProfil(self.pointstoDraw, False)
             self.lastFreeHandPoints = self.pointstoDraw
             self.pointstoDraw = []
-            self.iface.mainWindow().statusBar().showMessage(message)
+            self.iface.mainWindow().statusBar().showMessage(self.textquit1)
+        elif self.profiletool.dockwidget.selectionmethod == 2:
+            result = SelectLineTool(
+                    selectionMethod="layer").getPointTableFromSelectedLine(
+                            self.iface, self.tool, newPoints, self.layerindex, 
+                            self.previousLayer , self.pointstoDraw)
+            self.pointstoDraw = result[0]
+            self.layerindex = result[1]
+            self.previousLayer = result[2]
+            self.profiletool.calculateProfil(self.pointstoDraw, False)
+            self.lastFreeHandPoints = self.pointstoDraw
+            self.pointstoDraw = []
+            self.iface.mainWindow().statusBar().showMessage(self.textquit2)
            
     def doubleClicked(self,position):
         if self.profiletool.dockwidget.selectionmethod == 0:
