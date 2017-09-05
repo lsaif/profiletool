@@ -36,7 +36,6 @@ except:
 
 
 class SelectLineTool:
-    
     def getPointTableFromSelectedLine(self, iface, tool, newPoints, layerindex, previousLayer, pointstoDraw ):
         pointstoDraw = []
         #self.previousLayer = previousLayer1
@@ -50,7 +49,30 @@ class SelectLineTool:
         # get the point coordinates in the layer's CRS
         point = tool.toLayerCoordinates(layer, QgsPointXY(newPoints[0][0],newPoints[0][1]))
 
+        closestFeature = self.select_closest_feature(
+                iface, layer, layerindex, previousLayer, point)
         
+        if closestFeature:
+            previousLayer = layer
+            iface.mainWindow().statusBar().showMessage("selectline")
+            layer.removeSelection()
+            
+            #closest
+            #closestFeature = layer.getFeatures(QgsFeatureRequest(featureId)).next()
+            layer.select( closestFeature.id() )
+            k = 0
+            while not closestFeature.geometry().vertexAt(k) == QgsPoint(0,0):
+                point2 = tool.toMapCoordinates(layer, closestFeature.geometry().vertexAt(k) )
+                pointstoDraw += [[point2.x(),point2.y()]]
+                k += 1
+                # replicate last point (bug #6680)
+                if k > 0 :
+                    pointstoDraw += [[point2.x(),point2.y()]]
+        return [pointstoDraw, layerindex, previousLayer]
+
+    @staticmethod
+    def select_closest_feature(iface, layer, layerindex, previousLayer, point):
+                
         if layerindex == None or layer != previousLayer:
             # there's no previously created index or it's not the same layer,
             # then create the index
@@ -149,7 +171,7 @@ class SelectLineTool:
                 closestFeature = f
                 if featureId == None or layer.getFeatures(QgsFeatureRequest(featureId)).nextFeature(f) == False:
                     closestFeature = None
-                    
+
         previousLayer = layer
         iface.mainWindow().statusBar().showMessage("selectline")
         layer.removeSelection()
@@ -167,3 +189,4 @@ class SelectLineTool:
             if k > 0 :
                 pointstoDraw += [[point2.x(),point2.y()]]
         return [pointstoDraw, layerindex, previousLayer]
+
