@@ -64,21 +64,21 @@ class ProfileToolCore(QWidget):
         self.rubberbandpoint.setIconSize(5)
         self.rubberbandpoint.setIconType(QgsVertexMarker.ICON_BOX) # or ICON_CROSS, ICON_X
         self.rubberbandpoint.setPenWidth(3)
-        
+
         self.rubberbandbuf = QgsRubberBand(self.iface.mapCanvas())
         self.rubberbandbuf.setWidth(1)
         self.rubberbandbuf.setColor(QtGui.QColor(QtCore.Qt.blue))
         #remimber repository for saving
         if QtCore.QSettings().value("profiletool/lastdirectory") != '':
-            self.loaddirectory = QtCore.QSettings().value("profiletool/lastdirectory")       
+            self.loaddirectory = QtCore.QSettings().value("profiletool/lastdirectory")
         else:
             self.loaddirectory = ''
-        
-        
+
+
         #mouse tracking
         self.doTracking = False
         #the dockwidget
-        self.dockwidget = PTDockWidget(self.iface,self)     
+        self.dockwidget = PTDockWidget(self.iface,self)
         #dockwidget graph zone
         self.dockwidget.changePlotLibrary( self.dockwidget.cboLibrary.currentIndex() )
         #the datas / results
@@ -90,9 +90,9 @@ class ProfileToolCore(QWidget):
         self.toolrenderer = None
         #the maptool previously loaded
         self.saveTool = None                #Save the standard mapttool for restoring it at the end
-        
-        
-        
+
+
+
     def activateProfileMapTool(self):
         self.saveTool = self.iface.mapCanvas().mapTool()            #Save the standard mapttool for restoring it at the end
         #Listeners of mouse
@@ -113,16 +113,16 @@ class ProfileToolCore(QWidget):
         self.disableMouseCoordonates()
         self.rubberbandbuf.reset()
         self.pointstoDraw = points1
-        
+
         #self.prepar_points(self.pointstoDraw)   #for mouse tracking
         self.removeClosedLayers(self.dockwidget.mdl)
         if self.pointstoDraw == None:
             return
-        
+
         PlottingTool().clearData(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)
-        
+
         self.profiles = []
-        
+
         if vertline:                        #Plotting vertical lines at the node of polyline draw
             PlottingTool().drawVertLine(self.dockwidget, self.pointstoDraw, self.dockwidget.plotlibrary)
 
@@ -135,7 +135,7 @@ class ProfileToolCore(QWidget):
                 self.profiles[i], buffer, multipoly = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
                 self.rubberbandbuf.addGeometry(buffer,None)
                 self.rubberbandbuf.addGeometry(multipoly,None)
-                
+
             else:
                 self.profiles[i] = DataReaderTool().dataRasterReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, self.dockwidget.checkBox.isChecked())
 
@@ -145,16 +145,16 @@ class ProfileToolCore(QWidget):
         #create tab with profile xy
         self.dockwidget.updateCoordinateTab()
         #Mouse tracking
-        
-        
+
+
         if self.doTracking :
             self.rubberbandpoint.show()
         self.enableMouseCoordonates(self.dockwidget.plotlibrary)
-        
-                
 
-    
-    
+
+
+
+
     # remove layers which were removed from QGIS
     def removeClosedLayers(self, model1):
         qgisLayerNames = []
@@ -166,7 +166,7 @@ class ProfileToolCore(QWidget):
             """
         elif int(QtCore.QT_VERSION_STR[0]) == 5 :    #qgis3
             qgisLayerNames = [  layer.name()    for layer in qgis.core.QgsProject().instance().mapLayers().values()]
-            
+
         #print('qgisLayerNames',qgisLayerNames)
         for i in range(0 , model1.rowCount()):
             layerName = model1.item(i,2).data(QtCore.Qt.EditRole)
@@ -174,30 +174,30 @@ class ProfileToolCore(QWidget):
                 self.dockwidget.removeLayer(i)
                 self.removeClosedLayers(model1)
                 break
-    
+
 
     def getProfileCurve(self,nr):
         try:
             return self.profiles[nr]["curve"]
         except:
             return None
-            
-    
+
+
     #******************************************************************************************
     #**************************** mouse interaction *******************************************
     #******************************************************************************************
-            
+
     def activateMouseTracking(self,int1):
 
         if self.dockwidget.TYPE == 'PyQtGraph':
-            
+
             if int1 == 2 :
                 self.doTracking = True
                 self.rubberbandpoint.show()
             elif int1 == 0 :
                 self.doTracking = False
                 self.rubberbandpoint.hide()
-    
+
         elif self.dockwidget.TYPE == 'Matplotlib':
             if int1 == 2 :
                 self.doTracking = True
@@ -215,8 +215,8 @@ class ProfileToolCore(QWidget):
                         self.dockwidget.plotWdg.draw()
                 except Exception as e:
                     print(str(e) )
-                    
-                    
+
+
 
     def mouseevent_mpl(self,event):
         """
@@ -237,52 +237,52 @@ class ProfileToolCore(QWidget):
                 i=i+1
             i=i-1
             x = self.tabmouseevent[i][1] +(self.tabmouseevent[i+1][1] - self.tabmouseevent[i][1] )/ ( self.tabmouseevent[i+1][0] - self.tabmouseevent[i][0]  )  *   (xdata - self.tabmouseevent[i][0])
-            y = self.tabmouseevent[i][2] +(self.tabmouseevent[i+1][2] - self.tabmouseevent[i][2] )/ ( self.tabmouseevent[i+1][0] - self.tabmouseevent[i][0]  )  *   (xdata - self.tabmouseevent[i][0])  
-            self.rubberbandpoint.show() 
+            y = self.tabmouseevent[i][2] +(self.tabmouseevent[i+1][2] - self.tabmouseevent[i][2] )/ ( self.tabmouseevent[i+1][0] - self.tabmouseevent[i][0]  )  *   (xdata - self.tabmouseevent[i][0])
+            self.rubberbandpoint.show()
             point = QgsPoint( x,y )
             self.rubberbandpoint.setCenter(point)
             """
             if not self.pointstoDraw is None:
                 geom =  qgis.core.QgsGeometry.fromPolyline([QgsPoint(point[0], point[1]) for point in self.pointstoDraw])
                 pointprojected = geom.interpolate(xdata)
-                self.rubberbandpoint.show() 
+                self.rubberbandpoint.show()
                 self.rubberbandpoint.setCenter(pointprojected.asPoint())
-            
-            
-            
+
+
+
     def enableMouseCoordonates(self,library):
         if library == "PyQtGraph":
             self.dockwidget.plotWdg.scene().sigMouseMoved.connect(self.mouseMovedPyQtGraph)
             self.dockwidget.plotWdg.getViewBox().autoRange( items=self.dockwidget.plotWdg.getPlotItem().listDataItems())
             #self.dockwidget.plotWdg.getViewBox().sigRangeChanged.connect(self.dockwidget.plotRangechanged)
             self.dockwidget.connectPlotRangechanged()
-            
-            
-            
+
+
+
     def disableMouseCoordonates(self):
         try:
             self.dockwidget.plotWdg.scene().sigMouseMoved.disconnect(self.mouseMovedPyQtGraph)
         except:
             pass
-            
+
         self.dockwidget.disconnectPlotRangechanged()
-        
-    
-        
+
+
+
     def mouseMovedPyQtGraph(self, pos): # si connexion directe du signal "mouseMoved" : la fonction reçoit le point courant
             roundvalue = 3
 
             if self.dockwidget.plotWdg.sceneBoundingRect().contains(pos): # si le point est dans la zone courante
-            
+
                 if self.dockwidget.showcursor :
                     range = self.dockwidget.plotWdg.getViewBox().viewRange()
                     mousePoint = self.dockwidget.plotWdg.getViewBox().mapSceneToView(pos) # récupère le point souris à partir ViewBox
-                    
+
                     datas = []
                     pitems = self.dockwidget.plotWdg.getPlotItem()
                     ytoplot = None
                     xtoplot = None
-                    
+
                     if len(pitems.listDataItems())>0:
                         #get data and nearest xy from cursor
                         compt = 0
@@ -317,19 +317,19 @@ class ProfileToolCore(QWidget):
                                         item.show()
                                         item.setText('Y : '+str(round(ytoplot,roundvalue)))
                                         item.setPos(range[0][0],ytoplot )
-                                    
 
-                                    
-                                    
+
+
+
                     #tracking part
                     if self.doTracking and not xtoplot is None and not ytoplot is None:
                         geom =  qgis.core.QgsGeometry.fromPolyline([QgsPoint(point[0], point[1]) for point in self.pointstoDraw])
                         pointprojected = geom.interpolate(xtoplot)
-                        self.rubberbandpoint.show() 
+                        self.rubberbandpoint.show()
                         self.rubberbandpoint.setCenter(pointprojected.asPoint())
 
 
-            
+
     def prepar_points(self,points1):
         self.tabmouseevent=[]
         len = 0
