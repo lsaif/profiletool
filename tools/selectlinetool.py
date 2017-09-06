@@ -40,7 +40,7 @@ class SelectLineTool:
         """Selection mode can be feature or layer."""
         self.selectionMethod = selectionMethod
 
-    def getPointTableFromSelectedLine(self, iface, tool, newPoints, layerindex, previousLayer, pointstoDraw ):
+    def getPointTableFromSelectedLine(self, iface, tool, newPoints, layerindex, previousLayer):
         pointstoDraw = []
         #self.previousLayer = previousLayer1
         layer = iface.activeLayer()

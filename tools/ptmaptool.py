@@ -130,7 +130,7 @@ class ProfiletoolMapToolRenderer():
             result = SelectLineTool(
                     selectionMethod=method).getPointTableFromSelectedLine(
                             self.iface, self.tool, newPoints, self.layerindex,
-                            self.previousLayer , self.pointstoDraw)
+                            self.previousLayer)
             self.pointstoDraw = result[0]
             self.layerindex = result[1]
             self.previousLayer = result[2]
