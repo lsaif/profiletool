@@ -138,9 +138,7 @@ class ProfileToolCore(QWidget):
                 
             else:
                 self.profiles[i] = DataReaderTool().dataRasterReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, self.dockwidget.checkBox.isChecked())
-            
-            
-            
+
         #plot profiles
         PlottingTool().attachCurves(self.dockwidget, self.profiles, self.dockwidget.mdl, self.dockwidget.plotlibrary)
         PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)

@@ -176,13 +176,15 @@ class PlottingTool:
 
 
     def attachCurves(self, wdg, profiles, model1, library):
-    
+        y_vals = [p["z"] for p in profiles]
+        x_vals = [p["l"] for p in profiles]
+        
         if library == "PyQtGraph":
             #cretae graph
             for i in range(0 , model1.rowCount()):
                 tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
                 #case line outside the raster
-                y = np.array(profiles[i]["z"], dtype=np.float)  #replace None value by np.nan
+                y = np.array(y_vals[i], dtype=np.float)  #replace None value by np.nan
                 x = np.array(profiles[i]["l"])
                 wdg.plotWdg.plot(x, y, pen=pg.mkPen( model1.item(i,1).data(Qt.BackgroundRole),  width=2) , name = tmp_name)
             #set it visible or not
@@ -202,7 +204,7 @@ class PlottingTool:
                 # with breaks wherever data is None.
                 # Prepare two lists of coordinates (xx and yy). Make x=None whenever y==None.
                 xx = profiles[i]["l"]
-                yy = profiles[i]["z"]
+                yy = y_vals[i]
                 for j in range(len(yy)):
                     if yy[j] is None:
                         xx[j] = None
@@ -235,9 +237,9 @@ class PlottingTool:
             for i in range(0 , model1.rowCount()):
                 tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
                 if model1.item(i,0).data(Qt.CheckStateRole):
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i]["z"], gid = tmp_name, linewidth = 3, visible = True)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], y_vals[i], gid = tmp_name, linewidth = 3, visible = True)
                 else:
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i]["z"], gid = tmp_name, linewidth = 3, visible = False)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], y_vals[i], gid = tmp_name, linewidth = 3, visible = False)
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), tmp_name)
                 try:
                     self.reScalePlot(wdg, profiles, library)
@@ -249,19 +251,13 @@ class PlottingTool:
             wdg.plotWdg.draw()
 
 
-    def findMin(self,profiles, nr):
-        minVal = min( z for z in profiles[nr]["z"] if z is not None )
-        #maxVal = max( profiles[nr]["z"] ) + 1
-        maxVal = max( z for z in profiles[nr]["z"] if z is not None ) + 1
-        d = ( maxVal - minVal ) or 1
+    def findMin(self, values):
+        minVal = min( z for z in values if z is not None )
         return minVal
 
 
-    def findMax(self,profiles, nr):
-        minVal = min( z for z in profiles[nr]["z"] if z is not None )
-        #maxVal = max( profiles[nr]["z"] ) + 1
-        maxVal = max( z for z in profiles[nr]["z"] if z is not None ) + 1
-        d = ( maxVal - minVal ) or 1
+    def findMax(self, values):
+        maxVal = max( z for z in values if z is not None ) + 1
         return maxVal
         
         
@@ -282,16 +278,16 @@ class PlottingTool:
         minimumValue = wdg.sbMinVal.value()
         maximumValue = wdg.sbMaxVal.value()
         
+        y_vals = [p["z"] for p in profiles]
+        
         if minimumValue == maximumValue:
             # Automatic mode
             minimumValue = 1000000000
             maximumValue = -1000000000
-            for i in range(0,len(profiles)):
-                if profiles[i]["layer"] != None and len([z for z in profiles[i]["z"] if z is not None]) > 0:
-                    if self.findMin(profiles, i) < minimumValue:
-                        minimumValue = self.findMin(profiles, i)
-                    if self.findMax(profiles, i) > maximumValue:
-                        maximumValue = self.findMax(profiles, i)
+            for i in range(0,len(y_vals)):
+                if profiles[i]["layer"] != None and len([z for z in y_vals[i] if z is not None]) > 0:
+                    minimumValue = min(self.findMin(y_vals[i]), minimumValue)
+                    maximumValue = max(self.findMax(y_vals[i]), maximumValue)
                     wdg.sbMaxVal.setValue(maximumValue)
                     wdg.sbMinVal.setValue(minimumValue)
                     wdg.sbMaxVal.setEnabled(True)
