@@ -80,7 +80,7 @@ class SelectLineTool:
 
     @staticmethod
     def select_closest_feature(iface, layer, layerindex, previousLayer, point):
-
+        """Returns a list with the closest feature in given layer."""
         if layerindex == None or layer != previousLayer:
             # there's no previously created index or it's not the same layer,
             # then create the index
@@ -187,7 +187,7 @@ class SelectLineTool:
         """Returns a list with all the features in layer.
 
         iface, layerindex, previousLayer, point are unused, kept to use
-        the same functio ninterface as select_closest_feature.
+        the same function interface as select_closest_feature.
         """
         feats = []
         for f in layer.getFeatures():
