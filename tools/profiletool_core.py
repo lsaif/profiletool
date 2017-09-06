@@ -110,9 +110,30 @@ class ProfileToolCore(QWidget):
 
     #def calculateProfil(self, points1, model1, library, vertline = True):
     def calculateProfil(self, points1,  vertline = True):
+        """Updates profiles from points1 and redraws newly calculated profiles.
+        """
+        self.updateProfil(points1)
+        self.plotProfil(points1)
+
+    def updateProfil(self, points1):
+        """Updates self.profiles from values in points1"""
+        self.pointstoDraw = points1
+        self.profiles = []
+
+        #calculate profiles
+        for i in range(0 , self.dockwidget.mdl.rowCount()):
+            self.profiles.append( {"layer": self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole) } )
+            self.profiles[i]["band"] = self.dockwidget.mdl.item(i,3).data(QtCore.Qt.EditRole)
+            #if self.dockwidget.mdl.item(i,5).data(Qt.EditRole).type() == self.dockwidget.mdl.item(i,5).data(Qt.EditRole).VectorLayer :
+            if self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer :
+                self.profiles[i], _, _ = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
+            else:
+                self.profiles[i] = DataReaderTool().dataRasterReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, self.dockwidget.checkBox.isChecked())
+
+
+    def plotProfil(self, vertline = True):
         self.disableMouseCoordonates()
         self.rubberbandbuf.reset()
-        self.pointstoDraw = points1
 
         #self.prepar_points(self.pointstoDraw)   #for mouse tracking
         self.removeClosedLayers(self.dockwidget.mdl)
@@ -121,23 +142,16 @@ class ProfileToolCore(QWidget):
 
         PlottingTool().clearData(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)
 
-        self.profiles = []
-
         if vertline:                        #Plotting vertical lines at the node of polyline draw
             PlottingTool().drawVertLine(self.dockwidget, self.pointstoDraw, self.dockwidget.plotlibrary)
 
         #calculate profiles
         for i in range(0 , self.dockwidget.mdl.rowCount()):
-            self.profiles.append( {"layer": self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole) } )
-            self.profiles[i]["band"] = self.dockwidget.mdl.item(i,3).data(QtCore.Qt.EditRole)
             #if self.dockwidget.mdl.item(i,5).data(Qt.EditRole).type() == self.dockwidget.mdl.item(i,5).data(Qt.EditRole).VectorLayer :
             if self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer :
-                self.profiles[i], buffer, multipoly = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
+                _, buffer, multipoly = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
                 self.rubberbandbuf.addGeometry(buffer,None)
                 self.rubberbandbuf.addGeometry(multipoly,None)
-
-            else:
-                self.profiles[i] = DataReaderTool().dataRasterReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, self.dockwidget.checkBox.isChecked())
 
         #plot profiles
         PlottingTool().attachCurves(self.dockwidget, self.profiles, self.dockwidget.mdl, self.dockwidget.plotlibrary)
@@ -150,6 +164,7 @@ class ProfileToolCore(QWidget):
         if self.doTracking :
             self.rubberbandpoint.show()
         self.enableMouseCoordonates(self.dockwidget.plotlibrary)
+
 
 
 
