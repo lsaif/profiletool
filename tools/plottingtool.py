@@ -257,7 +257,7 @@ class PlottingTool:
 
 
     def findMax(self, values):
-        maxVal = max( z for z in values if z is not None ) + 1
+        maxVal = max( z for z in values if z is not None )
         return maxVal
         
         
@@ -287,7 +287,8 @@ class PlottingTool:
             for i in range(0,len(y_vals)):
                 if profiles[i]["layer"] != None and len([z for z in y_vals[i] if z is not None]) > 0:
                     minimumValue = min(self.findMin(y_vals[i]), minimumValue)
-                    maximumValue = max(self.findMax(y_vals[i]), maximumValue)
+                    maximumValue = max(self.findMax(y_vals[i]) + 1, 
+                                       maximumValue)
                     wdg.sbMaxVal.setValue(maximumValue)
                     wdg.sbMinVal.setValue(minimumValue)
                     wdg.sbMaxVal.setEnabled(True)
