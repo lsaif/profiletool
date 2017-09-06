@@ -49,15 +49,15 @@ class ProfiletoolMapToolRenderer():
         self.pointstoCal = []
         self.dblclktemp = None        #enable disctinction between leftclick and doubleclick
         self.lastFreeHandPoints = []
-        
-        
+
+
         self.textquit0 = "Click for polyline and double click to end (right click to cancel then quit)"
         self.textquit1 = "Select the polyline feature in a vector layer (Right click to quit)"
         self.textquit2 = "Select the polyline vector layer (Right click to quit)"
 
         self.layerindex = None                            #for selection mode
         self.previousLayer = None                        #for selection mode
-    
+
 
 #************************************* Mouse listener actions ***********************************************
 
@@ -74,7 +74,7 @@ class ProfiletoolMapToolRenderer():
                         self.profiletool.rubberband.reset(self.profiletool.polygon)
                 except: #qgis3
                     self.profiletool.rubberband.reset(qgis.core.QgsWkbTypes.LineGeometry)
-                        
+
                 for i in range(0,len(self.pointstoDraw)):
                      self.profiletool.rubberband.addPoint(QgsPointXY(self.pointstoDraw[i][0],self.pointstoDraw[i][1]))
                 self.profiletool.rubberband.addPoint(QgsPointXY(mapPos.x(),mapPos.y()))
@@ -110,7 +110,7 @@ class ProfiletoolMapToolRenderer():
         newPoints = [[mapPos.x(), mapPos.y()]]
         if self.profiletool.doTracking :
             self.profiletool.rubberbandpoint.hide()
-            
+
         if self.profiletool.dockwidget.selectionmethod == 0:
             if newPoints == self.dblclktemp:
                 self.dblclktemp = None
@@ -138,20 +138,8 @@ class ProfiletoolMapToolRenderer():
             self.profiletool.calculateProfil(self.pointstoDraw, False)
             self.lastFreeHandPoints = self.pointstoDraw
             self.pointstoDraw = []
-            self.iface.mainWindow().statusBar().showMessage(self.textquit1)
-        elif self.profiletool.dockwidget.selectionmethod == 2:
-            result = SelectLineTool(
-                    selectionMethod="layer").getPointTableFromSelectedLine(
-                            self.iface, self.tool, newPoints, self.layerindex, 
-                            self.previousLayer , self.pointstoDraw)
-            self.pointstoDraw = result[0]
-            self.layerindex = result[1]
-            self.previousLayer = result[2]
-            self.profiletool.calculateProfil(self.pointstoDraw, False)
-            self.lastFreeHandPoints = self.pointstoDraw
-            self.pointstoDraw = []
-            self.iface.mainWindow().statusBar().showMessage(self.textquit2)
-           
+            self.iface.mainWindow().statusBar().showMessage(message)
+
     def doubleClicked(self,position):
         if self.profiletool.dockwidget.selectionmethod == 0:
             #Validation of line
@@ -169,8 +157,8 @@ class ProfiletoolMapToolRenderer():
             self.iface.mainWindow().statusBar().showMessage(self.textquit0)
         if self.profiletool.dockwidget.selectionmethod in (1, 2):
             return
-            
-            
+
+
     def cleaning(self):            #used on right click
         try:
             #print str(self.previousLayer)
@@ -184,17 +172,17 @@ class ProfiletoolMapToolRenderer():
         self.profiletool.rubberband.reset(self.profiletool.polygon)
         self.profiletool.rubberbandbuf.reset()
         self.iface.mainWindow().statusBar().showMessage( "" )
-        
-            
-            
+
+
+
     def connectTool(self):
-            
+
         self.tool.moved.connect(self.moved)
         self.tool.rightClicked.connect(self.rightClicked)
         self.tool.leftClicked.connect(self.leftClicked)
         self.tool.doubleClicked.connect(self.doubleClicked)
         self.tool.desactivate.connect(self.deactivate)
-        
+
         if self.profiletool.dockwidget.selectionmethod == 0:
             self.iface.mainWindow().statusBar().showMessage(self.textquit0)
         elif self.profiletool.dockwidget.selectionmethod == 1:
@@ -204,7 +192,7 @@ class ProfiletoolMapToolRenderer():
 
 
     def deactivate(self):        #enable clean exit of the plugin
-            
+
         self.tool.moved.disconnect(self.moved)
         self.tool.rightClicked.disconnect(self.rightClicked)
         self.tool.leftClicked.disconnect(self.leftClicked)
@@ -212,7 +200,7 @@ class ProfiletoolMapToolRenderer():
         self.tool.desactivate.disconnect(self.deactivate)
         self.profiletool.rubberbandpoint.hide()
         self.profiletool.rubberband.reset(self.profiletool.polygon)
-        
+
         self.iface.mainWindow().statusBar().showMessage("")
 
 
