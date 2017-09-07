@@ -99,6 +99,7 @@ class ProfilePlugin:
 
     def cleaning(self):
         self.dockOpened = False
+        self.profiletool.updateProfilFromFeatures(None, [])
         self.profiletool.rubberband.reset(self.profiletool.polygon)
         self.profiletool.rubberbandbuf.reset()
         self.profiletool.rubberbandpoint.hide()
