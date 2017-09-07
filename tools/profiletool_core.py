@@ -90,7 +90,8 @@ class ProfileToolCore(QWidget):
         self.toolrenderer = None
         #the maptool previously loaded
         self.saveTool = None                #Save the standard mapttool for restoring it at the end
-
+        # Used to remove highlighting from previously active layer.
+        self.previousLayer = None
 
 
     def activateProfileMapTool(self):
@@ -115,8 +116,39 @@ class ProfileToolCore(QWidget):
         self.updateProfil(points1)
         self.plotProfil(vertline)
 
+    def updateProfilFromFeatures(self, layer, features):
+        """Updates self.profiles from given feature list.
+
+        This function extracts the list of coordinates from the given
+        feature set and calls updateProfil.
+        This function also manages selection of features in active layers.
+        """
+        pointstoDraw = []
+        if self.previousLayer:
+            # Be sure that we unselect anything in the previous layer.
+            self.previousLayer.removeSelection()
+        self.previousLayer = layer
+        layer.removeSelection()
+        layer.select([f.id() for f in features])
+        for feature in features:
+            k = 0
+            while not feature.geometry().vertexAt(k) == QgsPoint(0,0):
+                point2 = self.toolrenderer.tool.toMapCoordinates(
+                        layer, 
+                        QgsPointXY(feature.geometry().vertexAt(k)))
+                pointstoDraw += [[point2.x(),point2.y()]]
+                k += 1
+                # replicate last point (bug #6680)
+                if k > 0 :
+                    pointstoDraw += [[point2.x(),point2.y()]]
+        self.updateProfil(pointstoDraw)
+
     def updateProfil(self, points1):
-        """Updates self.profiles from values in points1"""
+        """Updates self.profiles from values in points1.
+
+        This function can be called from updateProfilFromFeatures and from
+        ProfiletoolMapToolRenderer with a list of points from rubberband.
+        """
         self.pointstoDraw = points1
         self.profiles = []
 
@@ -129,7 +161,7 @@ class ProfileToolCore(QWidget):
                 self.profiles[i], _, _ = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
             else:
                 self.profiles[i] = DataReaderTool().dataRasterReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, self.dockwidget.checkBox.isChecked())
-
+        self.plotProfil()
 
     def plotProfil(self, vertline = True):
         self.disableMouseCoordonates()
@@ -137,10 +169,10 @@ class ProfileToolCore(QWidget):
 
         #self.prepar_points(self.pointstoDraw)   #for mouse tracking
         self.removeClosedLayers(self.dockwidget.mdl)
-        if self.pointstoDraw == None:
-            return
-
         PlottingTool().clearData(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)
+
+        if not self.pointstoDraw:
+            return
 
         if vertline:                        #Plotting vertical lines at the node of polyline draw
             PlottingTool().drawVertLine(self.dockwidget, self.pointstoDraw, self.dockwidget.plotlibrary)

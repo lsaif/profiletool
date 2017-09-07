@@ -364,9 +364,7 @@ class PTDockWidget(QDockWidget, FormClass):
         #    Refreshes/updates the plot without requiring the user to
         #    redraw the plot line (rubberband)
         #
-
-        if len(self.profiletoolcore.toolrenderer.lastFreeHandPoints) > 1:
-            self.profiletoolcore.calculateProfil(self.profiletoolcore.toolrenderer.lastFreeHandPoints)
+        self.profiletoolcore.plotProfil()
 
 
     def _onClick(self,index1):                    #action when clicking the tableview
@@ -377,10 +375,9 @@ class PTDockWidget(QDockWidget, FormClass):
         #print('_onChange',self.mdl.item(item.row(),4), item.column(), self.mdl.item(item.row(),5).data(Qt.EditRole).type())
         if (not self.mdl.item(item.row(),5) is None
                 and item.column() == 4
-                and self.mdl.item(item.row(),5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer
-                and len(self.profiletoolcore.toolrenderer.lastFreeHandPoints) > 1):
+                and self.mdl.item(item.row(),5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer):
 
-            self.profiletoolcore.calculateProfil(self.profiletoolcore.toolrenderer.lastFreeHandPoints)
+            self.profiletoolcore.plotProfil()
 
 
 

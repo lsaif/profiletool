@@ -45,16 +45,13 @@ class ProfiletoolMapToolRenderer():
         self.iface = self.profiletool.iface
         self.canvas = self.profiletool.iface.mapCanvas()
         self.tool = ProfiletoolMapTool(self.canvas,self.profiletool.plugincore.action)        #the mouselistener
-        self.pointstoDraw = []  #Polyline in mapcanvas CRS analysed
+        self.pointstoDraw = []  #Polyline being drawn in freehand mode
         self.dblclktemp = None        #enable disctinction between leftclick and doubleclick
-        self.lastFreeHandPoints = []
 
 
         self.textquit0 = "Click for polyline and double click to end (right click to cancel then quit)"
         self.textquit1 = "Select the polyline feature in a vector layer (Right click to quit)"
         self.textquit2 = "Select the polyline vector layer (Right click to quit)"
-
-        self.previousLayer = None                        #for selection mode
 
 
 #************************************* Mouse listener actions ***********************************************
@@ -94,10 +91,6 @@ class ProfiletoolMapToolRenderer():
             else:
                 self.cleaning()
         if self.profiletool.dockwidget.selectionmethod in (1, 2):
-            try:
-                self.previousLayer.removeSelection( False )
-            except:
-                self.iface.mainWindow().statusBar().showMessage("error right click")
             self.cleaning()
 
 
@@ -126,13 +119,9 @@ class ProfiletoolMapToolRenderer():
                 message = self.textquit2
             result = SelectLineTool(
                     selectionMethod=method).getPointTableFromSelectedLine(
-                            self.iface, self.tool, newPoints,
-                            self.previousLayer)
-            self.pointstoDraw = result[0]
-            self.previousLayer = result[1]
-            self.profiletool.calculateProfil(self.pointstoDraw, False)
-            self.lastFreeHandPoints = self.pointstoDraw
-            self.pointstoDraw = []
+                            self.iface, self.tool, newPoints)
+            self.profiletool.updateProfilFromFeatures(result[0], result[1])
+            self.pointstoDraw = []  # Be sure that rubber band points are reset.
             self.iface.mainWindow().statusBar().showMessage(message)
 
     def doubleClicked(self,position):
@@ -145,7 +134,6 @@ class ProfiletoolMapToolRenderer():
             self.iface.mainWindow().statusBar().showMessage(str(self.pointstoDraw))
             self.profiletool.calculateProfil(self.pointstoDraw)
             #Reset
-            self.lastFreeHandPoints = self.pointstoDraw
             self.pointstoDraw = []
             #temp point to distinct leftclick and dbleclick
             self.dblclktemp = newPoints
@@ -155,12 +143,8 @@ class ProfiletoolMapToolRenderer():
 
 
     def cleaning(self):            #used on right click
-        try:
-            #print str(self.previousLayer)
-            self.previousLayer.removeSelection(False)
-            #self.previousLayer.select(None)
-        except:
-            pass
+        self.pointstoDraw = []
+        self.profiletool.updateProfilFromFeatures(None, [])
         self.profiletool.rubberbandpoint.hide()
         self.canvas.unsetMapTool(self.tool)
         self.canvas.setMapTool(self.profiletool.saveTool)
