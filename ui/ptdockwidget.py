@@ -144,11 +144,9 @@ class PTDockWidget(QDockWidget, FormClass):
         elif item == 1:
             self.selectionmethod = 1
             self.profiletoolcore.toolrenderer.tool.setCursor(QtCore.Qt.PointingHandCursor)
-            self.pointstoDraw = []
         elif item == 2:
             self.selectionmethod = 2
             self.profiletoolcore.toolrenderer.tool.setCursor(QtCore.Qt.PointingHandCursor)
-            self.pointstoDraw = []
 
         if self.iface.mapCanvas().mapTool() == self.profiletoolcore.toolrenderer.tool:
             self.iface.mapCanvas().setMapTool(self.profiletoolcore.toolrenderer.tool)
