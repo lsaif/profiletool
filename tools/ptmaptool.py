@@ -46,7 +46,6 @@ class ProfiletoolMapToolRenderer():
         self.canvas = self.profiletool.iface.mapCanvas()
         self.tool = ProfiletoolMapTool(self.canvas,self.profiletool.plugincore.action)        #the mouselistener
         self.pointstoDraw = []  #Polyline in mapcanvas CRS analysed
-        self.pointstoCal = []
         self.dblclktemp = None        #enable disctinction between leftclick and doubleclick
         self.lastFreeHandPoints = []
 
@@ -89,7 +88,6 @@ class ProfiletoolMapToolRenderer():
             #if newPoints == self.lastClicked: return # sometimes a strange "double click" is given
             if len(self.pointstoDraw) > 0:
                 self.pointstoDraw = []
-                self.pointstoCal = []
                 self.profiletool.rubberband.reset(self.profiletool.polygon)
                 self.profiletool.rubberbandbuf.reset()
                 self.profiletool.rubberbandpoint.hide()
