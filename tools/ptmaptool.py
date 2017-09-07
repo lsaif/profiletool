@@ -110,6 +110,7 @@ class ProfiletoolMapToolRenderer():
                     self.profiletool.rubberband.reset(self.profiletool.polygon)
                     self.profiletool.rubberbandbuf.reset()
                 self.pointstoDraw += newPoints
+                self.profiletool.updateProfil(self.pointstoDraw)
         if self.profiletool.dockwidget.selectionmethod in (1, 2):
             if self.profiletool.dockwidget.selectionmethod == 1:
                 method = "feature"

@@ -138,9 +138,7 @@ class ProfileToolCore(QWidget):
                         QgsPointXY(feature.geometry().vertexAt(k)))
                 pointstoDraw += [[point2.x(),point2.y()]]
                 k += 1
-                # replicate last point (bug #6680)
-                if k > 0 :
-                    pointstoDraw += [[point2.x(),point2.y()]]
+
         self.updateProfil(pointstoDraw)
 
     def updateProfil(self, points1):
@@ -149,6 +147,9 @@ class ProfileToolCore(QWidget):
         This function can be called from updateProfilFromFeatures and from
         ProfiletoolMapToolRenderer with a list of points from rubberband.
         """
+        # replicate last point (bug #6680)
+        if points1:
+            points1 = points1 + [points1[-1]]
         self.pointstoDraw = points1
         self.profiles = []
 
