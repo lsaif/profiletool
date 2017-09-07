@@ -113,7 +113,7 @@ class ProfileToolCore(QWidget):
         """Updates profiles from points1 and redraws newly calculated profiles.
         """
         self.updateProfil(points1)
-        self.plotProfil(points1)
+        self.plotProfil(vertline)
 
     def updateProfil(self, points1):
         """Updates self.profiles from values in points1"""
