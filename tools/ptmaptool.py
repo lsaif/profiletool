@@ -55,7 +55,6 @@ class ProfiletoolMapToolRenderer():
         self.textquit1 = "Select the polyline feature in a vector layer (Right click to quit)"
         self.textquit2 = "Select the polyline vector layer (Right click to quit)"
 
-        self.layerindex = None                            #for selection mode
         self.previousLayer = None                        #for selection mode
 
 
@@ -129,12 +128,10 @@ class ProfiletoolMapToolRenderer():
                 message = self.textquit2
             result = SelectLineTool(
                     selectionMethod=method).getPointTableFromSelectedLine(
-                            self.iface, self.tool, newPoints, self.layerindex,
+                            self.iface, self.tool, newPoints,
                             self.previousLayer)
             self.pointstoDraw = result[0]
-            self.layerindex = result[1]
-            self.previousLayer = result[2]
-            #self.profiletool.calculateProfil(self.pointstoDraw, self.mdl,self.plotlibrary, False)
+            self.previousLayer = result[1]
             self.profiletool.calculateProfil(self.pointstoDraw, False)
             self.lastFreeHandPoints = self.pointstoDraw
             self.pointstoDraw = []
