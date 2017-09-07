@@ -128,25 +128,30 @@ class ProfileToolCore(QWidget):
             # Be sure that we unselect anything in the previous layer.
             self.previousLayer.removeSelection()
         self.previousLayer = layer
-        layer.removeSelection()
-        layer.select([f.id() for f in features])
-        for feature in features:
-            k = 0
-            while not feature.geometry().vertexAt(k) == QgsPoint(0,0):
-                point2 = self.toolrenderer.tool.toMapCoordinates(
-                        layer, 
-                        QgsPointXY(feature.geometry().vertexAt(k)))
-                pointstoDraw += [[point2.x(),point2.y()]]
-                k += 1
 
-        self.updateProfil(pointstoDraw)
+        if layer:
+            layer.removeSelection()
+            layer.select([f.id() for f in features])
+            for feature in features:
+                k = 0
+                while not feature.geometry().vertexAt(k) == QgsPoint(0,0):
+                    point2 = self.toolrenderer.tool.toMapCoordinates(
+                            layer, 
+                            QgsPointXY(feature.geometry().vertexAt(k)))
+                    pointstoDraw += [[point2.x(),point2.y()]]
+                    k += 1
 
-    def updateProfil(self, points1):
+        self.updateProfil(pointstoDraw, False)
+
+    def updateProfil(self, points1, removeSelection=True):
         """Updates self.profiles from values in points1.
 
         This function can be called from updateProfilFromFeatures and from
         ProfiletoolMapToolRenderer with a list of points from rubberband.
         """
+        if removeSelection and self.previousLayer:
+            # Be sure that we unselect anything in the previous layer.
+            self.previousLayer.removeSelection()
         # replicate last point (bug #6680)
         if points1:
             points1 = points1 + [points1[-1]]
