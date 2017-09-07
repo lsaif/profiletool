@@ -109,13 +109,6 @@ class ProfileToolCore(QWidget):
     #******************************************************************************************
 
 
-    #def calculateProfil(self, points1, model1, library, vertline = True):
-    def calculateProfil(self, points1,  vertline = True):
-        """Updates profiles from points1 and redraws newly calculated profiles.
-        """
-        self.updateProfil(points1)
-        self.plotProfil(vertline)
-
     def updateProfilFromFeatures(self, layer, features):
         """Updates self.profiles from given feature list.
 
