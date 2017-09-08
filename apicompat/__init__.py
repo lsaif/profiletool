@@ -11,6 +11,8 @@ if not initialized and hasattr(qgis.utils, 'QGis'):
     # log('Running apicompat on QGIS version %s' % QGIS_VERSION)
 
     # Here import all the compatibility fixes modules
+    import qgswkbtypes
+    import qgsproject
     import qgspointxy
     import qgsmaplayer
     import qgsgeometry
