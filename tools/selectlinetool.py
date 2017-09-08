@@ -45,10 +45,10 @@ class SelectLineTool:
         layer = iface.activeLayer()
         if layer == None or layer.type() != QgsMapLayer.VectorLayer:
             QMessageBox.warning( iface.mainWindow(), "Closest Feature Finder", "No vector layers selected" )
-            return layer, closestFeatures
+            return None, closestFeatures
         if not layer.isSpatial():
             QMessageBox.warning( iface.mainWindow(), "Closest Feature Finder", "The selected layer has either no or unknown geometry" )
-            return layer, closestFeatures
+            return None, closestFeatures
         # get the point coordinates in the layer's CRS
         point = tool.toLayerCoordinates(layer, QgsPointXY(newPoints[0][0],newPoints[0][1]))
 
