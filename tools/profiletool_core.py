@@ -45,32 +45,10 @@ from .dataReaderTool import DataReaderTool
 from .plottingtool import PlottingTool
 from .ptmaptool import ProfiletoolMapTool, ProfiletoolMapToolRenderer
 from ..ui.ptdockwidget import PTDockWidget
-
-def slopes_pct(p):
-    """Return a profile's slope in percentage.
-
-    Returns the x (distance from origin) and y (slope in percentage)
-    coordinates for the plot.
-    """
-    x = np.array(p["l"])
-    y = np.array(p["z"])
-    slope_pct = 100 * (y[1:]-y[:-1])/(x[1:]-x[:-1])
-    slope_pct[np.isnan(slope_pct)] = 0
-    slope_pct[np.isinf(slope_pct)] = 0
-    px = 0.5*(x[:-1]+x[1:])
-    return px, slope_pct
-
-def slopes_deg(p):
-    x, slope_pct = slopes_pct(p)
-    slope_deg = np.degrees(np.arctan(slope_pct/100.0))
-    return x, slope_deg
+from . import profilers
 
 class ProfileToolCore(QWidget):
 
-
-    plot_profiles = {u"Height": lambda p: (p["l"], p["z"]),
-                     u"Slope (%)": slopes_pct,
-                     u"Slope (°)": slopes_deg}
     def __init__(self, iface,plugincore, parent = None):
         QWidget.__init__(self, parent)
         self.iface = iface
@@ -99,10 +77,10 @@ class ProfileToolCore(QWidget):
         self.x_cursor = None    # Keep track of last x position of cursor
         #the dockwidget
         self.dockwidget = PTDockWidget(self.iface,self)
-        # Initialize the combo box with the list of available profiles.
+        # Initialize the dockwidget combo box with the list of available profiles.
         # (Use sorted list to be sure that Height is always on top and
         # the combobox order is consistent)
-        for profile in sorted(self.plot_profiles):
+        for profile in sorted(profilers.PLOT_PROFILERS):
             self.dockwidget.plotComboBox.addItem(profile)
         self.dockwidget.plotComboBox.setCurrentIndex(0)
         self.dockwidget.plotComboBox.currentIndexChanged.connect(
@@ -171,8 +149,6 @@ class ProfileToolCore(QWidget):
         self.pointstoDraw = points1
         self.profiles = []
 
-        profile_func = self.plot_profiles[
-                            self.dockwidget.plotComboBox.currentText()]
         #calculate profiles
         for i in range(0 , self.dockwidget.mdl.rowCount()):
             self.profiles.append( {"layer": self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole) } )
@@ -182,8 +158,10 @@ class ProfileToolCore(QWidget):
                 self.profiles[i], _, _ = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
             else:
                 self.profiles[i] = DataReaderTool().dataRasterReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, self.dockwidget.checkBox.isChecked())
-            self.profiles[i]["plot_x"], self.profiles[i]["plot_y"] = \
-                profile_func(self.profiles[i])
+            # Plotting coordinate values are initialized on plotProfil
+            self.profiles[i]["plot_x"] = []
+            self.profiles[i]["plot_y"] = []
+
         self.plotProfil()
 
     def plotProfil(self, vertline = True):
@@ -209,7 +187,7 @@ class ProfileToolCore(QWidget):
         self.toolrenderer.setBufferGeometry(geoms)
 
         # Update coordinates to use in plot (height, slope %...)
-        profile_func = self.plot_profiles[
+        profile_func = profilers.PLOT_PROFILERS[
                             self.dockwidget.plotComboBox.currentText()]
 
         for i in range(0 , self.dockwidget.mdl.rowCount()):
