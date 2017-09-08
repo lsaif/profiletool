@@ -162,6 +162,9 @@
                 </widget>
                </item>
                <item>
+                <widget class="QComboBox" name="plotComboBox"/>
+               </item>
+               <item>
                 <spacer name="horizontalSpacer_2">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
@@ -406,8 +409,8 @@ on graph with canvas</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>63</width>
-             <height>16</height>
+             <width>650</width>
+             <height>294</height>
             </rect>
            </property>
           </widget>

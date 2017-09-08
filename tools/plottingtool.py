@@ -74,7 +74,7 @@ class PlottingTool:
     plotted.
     Subsequent calls to functions on this class pass along the wdg object
     where profiles are to be plotted.
-    Input data is the "profiles" vector, and the ["l"] and ["z"] values
+    Input data is the "profiles" vector, and the ["plot_x"] and ["plot_y"] values
     are used as the data series x and y values respectively.
     """
 
@@ -184,8 +184,8 @@ class PlottingTool:
 
 
     def attachCurves(self, wdg, profiles, model1, library):
-        y_vals = [p["z"] for p in profiles]
-        x_vals = [p["l"] for p in profiles]
+        y_vals = [p["plot_y"] for p in profiles]
+        x_vals = [p["plot_x"] for p in profiles]
 
         if library == "PyQtGraph":
             #cretae graph
@@ -193,7 +193,7 @@ class PlottingTool:
                 tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
                 #case line outside the raster
                 y = np.array(y_vals[i], dtype=np.float)  #replace None value by np.nan
-                x = np.array(profiles[i]["l"])
+                x = np.array(profiles[i]["plot_x"])
                 wdg.plotWdg.plot(x, y, pen=pg.mkPen( model1.item(i,1).data(Qt.BackgroundRole),  width=2) , name = tmp_name)
             #set it visible or not
             for i in range(0 , model1.rowCount()):
@@ -211,7 +211,7 @@ class PlottingTool:
                 # As QwtPlotCurve doesn't support nodata, split the data into single lines
                 # with breaks wherever data is None.
                 # Prepare two lists of coordinates (xx and yy). Make x=None whenever y==None.
-                xx = profiles[i]["l"]
+                xx = profiles[i]["plot_x"]
                 yy = y_vals[i]
                 for j in range(len(yy)):
                     if yy[j] is None:
@@ -234,7 +234,7 @@ class PlottingTool:
 
                 #scaling this
                 try:
-                    wdg.setAxisScale(2,0,max(profiles[len(profiles) - 1]["l"]),0)
+                    wdg.setAxisScale(2,0,max(profiles[len(profiles) - 1]["plot_x"]),0)
                     self.reScalePlot(wdg, profiles, library)
                 except:
                     pass
@@ -245,13 +245,13 @@ class PlottingTool:
             for i in range(0 , model1.rowCount()):
                 tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
                 if model1.item(i,0).data(Qt.CheckStateRole):
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], y_vals[i], gid = tmp_name, linewidth = 3, visible = True)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["plot_x"], y_vals[i], gid = tmp_name, linewidth = 3, visible = True)
                 else:
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], y_vals[i], gid = tmp_name, linewidth = 3, visible = False)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["plot_x"], y_vals[i], gid = tmp_name, linewidth = 3, visible = False)
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), tmp_name)
                 try:
                     self.reScalePlot(wdg, profiles, library)
-                    wdg.plotWdg.figure.get_axes()[0].set_xbound( 0, max(profiles[len(profiles) - 1]["l"]) )
+                    wdg.plotWdg.figure.get_axes()[0].set_xbound( 0, max(profiles[len(profiles) - 1]["plot_x"]) )
                 except:
                     pass
                     #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
@@ -286,7 +286,7 @@ class PlottingTool:
         minimumValue = wdg.sbMinVal.value()
         maximumValue = wdg.sbMaxVal.value()
 
-        y_vals = [p["z"] for p in profiles]
+        y_vals = [p["plot_y"] for p in profiles]
 
         if minimumValue == maximumValue:
             # Automatic mode
@@ -343,8 +343,8 @@ class PlottingTool:
         elif library == "Qwt5" and has_qwt:
             wdg.plotWdg.clear()
             for i in range(0,len(profiles)):
-                profiles[i]["l"] = []
-                profiles[i]["z"] = []
+                profiles[i]["plot_x"] = []
+                profiles[i]["plot_y"] = []
             temp1 = wdg.plotWdg.itemList()
             for j in range(len(temp1)):
                 if temp1[j].rtti() == QwtPlotItem.Rtti_PlotCurve:
