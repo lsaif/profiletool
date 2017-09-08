@@ -144,6 +144,12 @@ class ProfiletoolMapToolRenderer():
         if self.selectionmethod in (1, 2):
             return
 
+    def currentLayerChanged(self, layer):
+        if self.selectionmethod == 2:
+            if SelectLineTool.checkIsLineLayer(layer):
+                self.profiletool.updateProfilFromFeatures(layer,
+                 SelectLineTool.select_layer_features(None, layer, None))
+
     def setSelectionMethod(self, method):
         self.cleaning()
         self.selectionmethod = method
@@ -175,6 +181,8 @@ class ProfiletoolMapToolRenderer():
         self.tool.leftClicked.connect(self.leftClicked)
         self.tool.doubleClicked.connect(self.doubleClicked)
         self.tool.desactivate.connect(self.deactivate)
+        self.profiletool.iface.currentLayerChanged.connect(
+            self.currentLayerChanged)
 
     def deactivate(self):        #enable clean exit of the plugin
         self.cleaning()
@@ -183,6 +191,8 @@ class ProfiletoolMapToolRenderer():
         self.tool.leftClicked.disconnect(self.leftClicked)
         self.tool.doubleClicked.disconnect(self.doubleClicked)
         self.tool.desactivate.disconnect(self.deactivate)
+        self.profiletool.iface.currentLayerChanged.disconnect(
+            self.currentLayerChanged)
         self.canvas.unsetMapTool(self.tool)
         self.canvas.setMapTool(self.profiletool.saveTool)
 
