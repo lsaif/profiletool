@@ -135,30 +135,11 @@ class PTDockWidget(QDockWidget, FormClass):
 
     def selectionMethod(self,item):
 
-        self.profiletoolcore.rubberband.reset(self.profiletoolcore.polygon)
-        self.profiletoolcore.rubberbandpoint.hide()
-
-        if item == 0:
-            self.selectionmethod = 0
-            self.profiletoolcore.toolrenderer.tool.setCursor(QtCore.Qt.CrossCursor)
-        elif item == 1:
-            self.selectionmethod = 1
-            self.profiletoolcore.toolrenderer.tool.setCursor(QtCore.Qt.PointingHandCursor)
-        elif item == 2:
-            self.selectionmethod = 2
-            self.profiletoolcore.toolrenderer.tool.setCursor(QtCore.Qt.PointingHandCursor)
+        self.profiletoolcore.toolrenderer.setSelectionMethod(item)
 
         if self.iface.mapCanvas().mapTool() == self.profiletoolcore.toolrenderer.tool:
             self.iface.mapCanvas().setMapTool(self.profiletoolcore.toolrenderer.tool)
             self.profiletoolcore.toolrenderer.connectTool()
-            if self.selectionmethod == 0:
-                self.iface.mainWindow().statusBar().showMessage(self.profiletoolcore.toolrenderer.textquit0)
-            elif self.selectionmethod == 1:
-                self.iface.mainWindow().statusBar().showMessage(self.profiletoolcore.toolrenderer.textquit1)
-            elif self.selectionmethod == 2:
-                self.iface.mainWindow().statusBar().showMessage(self.profiletoolcore.toolrenderer.textquit2)
-
-
 
     def changePlotLibrary(self, item):
         self.plotlibrary = self.cboLibrary.itemText(item)
@@ -312,7 +293,7 @@ class PTDockWidget(QDockWidget, FormClass):
                 self.showcursor = False
                 self.profiletoolcore.doTracking = False
                 self.checkBox_mpl_tracking.setEnabled(False)
-                self.profiletoolcore.rubberbandpoint.hide()
+                self.profiletoolcore.toolrenderer.rubberbandpoint.hide()
 
                 for item in self.plotWdg.allChildItems():
                     if str(type(item)) == "<class 'profiletool.pyqtgraph.graphicsItems.InfiniteLine.InfiniteLine'>":

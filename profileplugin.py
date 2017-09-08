@@ -99,13 +99,10 @@ class ProfilePlugin:
 
     def cleaning(self):
         self.dockOpened = False
-        self.profiletool.updateProfilFromFeatures(None, [])
-        self.profiletool.rubberband.reset(self.profiletool.polygon)
-        self.profiletool.rubberbandbuf.reset()
-        self.profiletool.rubberbandpoint.hide()
-        self.canvas.unsetMapTool(self.profiletool.toolrenderer.tool)
+        self.profiletool.cleaning()
+        if self.profiletool.toolrenderer:
+            self.canvas.unsetMapTool(self.profiletool.toolrenderer.tool)
         self.canvas.setMapTool(self.profiletool.saveTool)
-
         self.iface.mainWindow().statusBar().showMessage( "" )
 
     def mapToolChanged(self,newtool,oldtool = None):
