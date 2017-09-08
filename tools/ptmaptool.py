@@ -164,8 +164,6 @@ class ProfiletoolMapToolRenderer():
 
     def cleaning(self):            #used on right click
         self.pointstoDraw = []
-        self.canvas.unsetMapTool(self.tool)
-        self.canvas.setMapTool(self.profiletool.saveTool)
         self.rubberbandpoint.hide()
         self.resetRubberBand()
         self.rubberbandbuf.reset()
@@ -179,13 +177,15 @@ class ProfiletoolMapToolRenderer():
         self.tool.desactivate.connect(self.deactivate)
 
     def deactivate(self):        #enable clean exit of the plugin
-
+        self.cleaning()
         self.tool.moved.disconnect(self.moved)
         self.tool.rightClicked.disconnect(self.rightClicked)
         self.tool.leftClicked.disconnect(self.leftClicked)
         self.tool.doubleClicked.disconnect(self.doubleClicked)
         self.tool.desactivate.disconnect(self.deactivate)
-        self.cleaning()
+        self.canvas.unsetMapTool(self.tool)
+        self.canvas.setMapTool(self.profiletool.saveTool)
+
 
 
 
