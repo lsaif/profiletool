@@ -75,11 +75,13 @@ class ProfileToolCore(QWidget):
         self.saveTool = None                #Save the standard mapttool for restoring it at the end
         # Used to remove highlighting from previously active layer.
         self.previousLayer = None
-
+        self.x_cursor = None    # Keep track of last x position of cursor
         #the dockwidget
         self.dockwidget = PTDockWidget(self.iface,self)
         #dockwidget graph zone
         self.dockwidget.changePlotLibrary( self.dockwidget.cboLibrary.currentIndex() )
+
+
 
 
 
@@ -185,8 +187,7 @@ class ProfileToolCore(QWidget):
         #Mouse tracking
 
 
-        if self.doTracking :
-            self.toolrenderer.rubberbandpoint.show()
+        self.updateCursorOnMap(self.x_cursor)
         self.enableMouseCoordonates(self.dockwidget.plotlibrary)
 
 
@@ -363,6 +364,7 @@ class ProfileToolCore(QWidget):
                     self.updateCursorOnMap(xtoplot)
 
     def updateCursorOnMap(self, x):
+        self.x_cursor = x
         if self.pointstoDraw and self.doTracking and x is not None:
             points = [QgsPoint(p[0], p[1]) for p in self.pointstoDraw]
             geom =  qgis.core.QgsGeometry.fromPolyline(points)
