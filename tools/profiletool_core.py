@@ -82,9 +82,6 @@ class ProfileToolCore(QWidget):
         self.dockwidget.changePlotLibrary( self.dockwidget.cboLibrary.currentIndex() )
 
 
-
-
-
     def activateProfileMapTool(self):
         self.saveTool = self.iface.mapCanvas().mapTool()            #Save the standard mapttool for restoring it at the end
         #Listeners of mouse
@@ -239,12 +236,8 @@ class ProfileToolCore(QWidget):
 
             if int1 == 2 :
                 self.doTracking = True
-                if self.toolrenderer:
-                    self.toolrenderer.rubberbandpoint.show()
             elif int1 == 0 :
                 self.doTracking = False
-                if self.toolrenderer:
-                    self.toolrenderer.rubberbandpoint.hide()
 
         elif self.dockwidget.TYPE == 'Matplotlib':
             if int1 == 2 :
@@ -256,8 +249,6 @@ class ProfileToolCore(QWidget):
                     self.dockwidget.plotWdg.mpl_disconnect(self.cid)
                 except:
                     pass
-                if self.toolrenderer:
-                    self.toolrenderer.rubberbandpoint.hide()
                 try:
                     if self.vline:
                         self.dockwidget.plotWdg.figure.get_axes()[0].lines.remove(self.vline)

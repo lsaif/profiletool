@@ -293,7 +293,7 @@ class PTDockWidget(QDockWidget, FormClass):
                 self.showcursor = False
                 self.profiletoolcore.doTracking = False
                 self.checkBox_mpl_tracking.setEnabled(False)
-                self.profiletoolcore.toolrenderer.rubberbandpoint.hide()
+
 
                 for item in self.plotWdg.allChildItems():
                     if str(type(item)) == "<class 'profiletool.pyqtgraph.graphicsItems.InfiniteLine.InfiniteLine'>":
@@ -306,7 +306,7 @@ class PTDockWidget(QDockWidget, FormClass):
                             item.hide()
                         elif item.textItem.toPlainText()[0] == 'Y':
                             item.hide()
-
+            self.profiletoolcore.plotProfil()
 
     #********************************************************************************
     #tablebiew things ****************************************************************
