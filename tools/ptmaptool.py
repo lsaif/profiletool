@@ -135,7 +135,7 @@ class ProfiletoolMapToolRenderer():
             self.pointstoDraw += newPoints
             #launch analyses
             self.iface.mainWindow().statusBar().showMessage(str(self.pointstoDraw))
-            self.profiletool.calculateProfil(self.pointstoDraw)
+            self.profiletool.updateProfil(self.pointstoDraw)
             #Reset
             self.pointstoDraw = []
             #temp point to distinct leftclick and dbleclick
