@@ -159,7 +159,6 @@ class ProfileToolCore(QWidget):
     def plotProfil(self, vertline = True):
         self.disableMouseCoordonates()
 
-        #self.prepar_points(self.pointstoDraw)   #for mouse tracking
         self.removeClosedLayers(self.dockwidget.mdl)
         PlottingTool().clearData(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)
 
@@ -190,10 +189,19 @@ class ProfileToolCore(QWidget):
         self.updateCursorOnMap(self.x_cursor)
         self.enableMouseCoordonates(self.dockwidget.plotlibrary)
 
+    def updateCursorOnMap(self, x):
+        self.x_cursor = x
+        if self.pointstoDraw and self.doTracking:
+            self.toolrenderer.rubberbandpoint.show()
+            if x is not None:
+                points = [QgsPoint(p[0], p[1]) for p in self.pointstoDraw]
+                geom =  qgis.core.QgsGeometry.fromPolyline(points)
+                pointprojected = geom.interpolate(x)
 
-
-
-
+                self.toolrenderer.rubberbandpoint.setCenter(
+                        pointprojected.asPoint())
+        else:
+            self.toolrenderer.rubberbandpoint.hide()
 
     # remove layers which were removed from QGIS
     def removeClosedLayers(self, model1):
@@ -214,13 +222,6 @@ class ProfileToolCore(QWidget):
                 self.dockwidget.removeLayer(i)
                 self.removeClosedLayers(model1)
                 break
-
-
-    def getProfileCurve(self,nr):
-        try:
-            return self.profiles[nr]["curve"]
-        except:
-            return None
 
     def cleaning(self):
         self.updateProfilFromFeatures(None, [])
@@ -362,29 +363,3 @@ class ProfileToolCore(QWidget):
                                         item.setPos(range[0][0],ytoplot )
                     #tracking part
                     self.updateCursorOnMap(xtoplot)
-
-    def updateCursorOnMap(self, x):
-        self.x_cursor = x
-        if self.pointstoDraw and self.doTracking and x is not None:
-            points = [QgsPoint(p[0], p[1]) for p in self.pointstoDraw]
-            geom =  qgis.core.QgsGeometry.fromPolyline(points)
-            pointprojected = geom.interpolate(x)
-            self.toolrenderer.rubberbandpoint.show()
-            self.toolrenderer.rubberbandpoint.setCenter(
-                    pointprojected.asPoint())
-
-
-
-
-    def prepar_points(self,points1):
-        self.tabmouseevent=[]
-        len = 0
-        for i,point in enumerate(points1):
-            if i==0:
-                self.tabmouseevent.append([0,point[0],point[1]])
-            else:
-                len = len + ( (points1[i][0] - points1[i-1][0] )**2 + (points1[i][1] - points1[i-1][1])**2 )**(0.5)
-                if len ==0:
-                    continue
-                self.tabmouseevent.append([float(len) ,float(point[0]),float(point[1])])
-        self.tabmouseevent = self.tabmouseevent[:-1]
