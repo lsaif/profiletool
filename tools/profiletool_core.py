@@ -171,6 +171,7 @@ class ProfileToolCore(QWidget):
         PlottingTool().clearData(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)
 
         if not self.pointstoDraw:
+            self.updateCursorOnMap(self.x_cursor)
             return
 
         if vertline:                        #Plotting vertical lines at the node of polyline draw
