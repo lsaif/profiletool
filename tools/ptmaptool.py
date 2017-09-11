@@ -149,6 +149,8 @@ class ProfiletoolMapToolRenderer():
             if SelectLineTool.checkIsLineLayer(layer):
                 self.profiletool.updateProfilFromFeatures(layer,
                  SelectLineTool.select_layer_features(None, layer, None))
+            else:
+                self.profiletool.updateProfilFromFeatures(None, [])
 
     def setSelectionMethod(self, method):
         self.cleaning()
@@ -162,6 +164,7 @@ class ProfiletoolMapToolRenderer():
         elif method == 2:
             self.tool.setCursor(Qt.PointingHandCursor)
             self.iface.mainWindow().statusBar().showMessage(self.textquit2)
+        self.currentLayerChanged(self.iface.activeLayer())
 
     def setBufferGeometry(self, geoms):
         self.rubberbandbuf.reset()
@@ -181,7 +184,7 @@ class ProfiletoolMapToolRenderer():
         self.tool.leftClicked.connect(self.leftClicked)
         self.tool.doubleClicked.connect(self.doubleClicked)
         self.tool.desactivate.connect(self.deactivate)
-        self.profiletool.iface.currentLayerChanged.connect(
+        self.iface.currentLayerChanged.connect(
             self.currentLayerChanged)
 
     def deactivate(self):        #enable clean exit of the plugin
@@ -191,7 +194,7 @@ class ProfiletoolMapToolRenderer():
         self.tool.leftClicked.disconnect(self.leftClicked)
         self.tool.doubleClicked.disconnect(self.doubleClicked)
         self.tool.desactivate.disconnect(self.deactivate)
-        self.profiletool.iface.currentLayerChanged.disconnect(
+        self.iface.currentLayerChanged.disconnect(
             self.currentLayerChanged)
         self.canvas.unsetMapTool(self.tool)
         self.canvas.setMapTool(self.profiletool.saveTool)
