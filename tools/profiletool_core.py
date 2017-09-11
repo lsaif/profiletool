@@ -73,7 +73,7 @@ class ProfileToolCore(QWidget):
         #the maptool previously loaded
         self.saveTool = None                #Save the standard mapttool for restoring it at the end
         # Used to remove highlighting from previously active layer.
-        self.previousLayer = None
+        self.previousLayerId = None
         self.x_cursor = None    # Keep track of last x position of cursor
         #the dockwidget
         self.dockwidget = PTDockWidget(self.iface,self)
@@ -115,10 +115,17 @@ class ProfileToolCore(QWidget):
         active layer to highlight the feature being profiled.
         """
         pointstoDraw = []
-        if self.previousLayer:
-            # Be sure that we unselect anything in the previous layer.
-            self.previousLayer.removeSelection()
-        self.previousLayer = layer
+
+        # Remove selection from previous layer if it still exists
+        previousLayer = QgsMapLayerRegistry.instance().mapLayer(
+                            self.previousLayerId)
+        if previousLayer:
+            previousLayer.removeSelection()
+
+        if layer:
+            self.previousLayerId = layer.id()
+        else:
+            self.previousLayerId = None
 
         if layer:
             layer.removeSelection()
@@ -140,9 +147,9 @@ class ProfileToolCore(QWidget):
         This function can be called from updateProfilFromFeatures or from
         ProfiletoolMapToolRenderer (with a list of points from rubberband).
         """
-        if removeSelection and self.previousLayer:
+        if removeSelection and self.previousLayerId:
             # Be sure that we unselect anything in the previous layer.
-            self.previousLayer.removeSelection()
+            self.previousLayerId.removeSelection()
         # replicate last point (bug #6680)
         if points1:
             points1 = points1 + [points1[-1]]
