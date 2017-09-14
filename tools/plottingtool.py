@@ -184,20 +184,16 @@ class PlottingTool:
 
 
     def attachCurves(self, wdg, profiles, model1, library):
-        y_vals = [p["plot_y"] for p in profiles]
-        x_vals = [p["plot_x"] for p in profiles]
 
         if library == "PyQtGraph":
             #cretae graph
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
+            for i, profile in enumerate(profiles):
+                tmp_name = ("%s#%d") % (profile["layer"].name(), profile["band"])
                 #case line outside the raster
-                y = np.array(y_vals[i], dtype=np.float)  #replace None value by np.nan
-                x = np.array(profiles[i]["plot_x"])
+                y = np.array(profile["plot_y"], dtype=np.float)  #replace None value by np.nan
+                x = np.array(profile["plot_x"])
                 wdg.plotWdg.plot(x, y, pen=pg.mkPen( model1.item(i,1).data(Qt.BackgroundRole),  width=2) , name = tmp_name)
-            #set it visible or not
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
+                #set it visible or not
                 for item in wdg.plotWdg.getPlotItem().listDataItems():
                     if item.name() == tmp_name:
                         item.setVisible(model1.item(i,0).data(Qt.CheckStateRole))
@@ -205,14 +201,14 @@ class PlottingTool:
 
 
         elif library == "Qwt5" and has_qwt:
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"]+1)
+            for i, profile in enumerate(profiles):
+                tmp_name = ("%s#%d") % (profile["layer"].name(), profile["band"]+1)
 
                 # As QwtPlotCurve doesn't support nodata, split the data into single lines
                 # with breaks wherever data is None.
                 # Prepare two lists of coordinates (xx and yy). Make x=None whenever y==None.
-                xx = profiles[i]["plot_x"]
-                yy = y_vals[i]
+                xx = profile["plot_x"]
+                yy = profile["plot_y"]
                 for j in range(len(yy)):
                     if yy[j] is None:
                         xx[j] = None
@@ -232,29 +228,29 @@ class PlottingTool:
                     else:
                         curve.setVisible(False)
 
-                #scaling this
-                try:
-                    wdg.setAxisScale(2,0,max(profiles[len(profiles) - 1]["plot_x"]),0)
-                    self.reScalePlot(wdg, profiles, library)
-                except:
-                    pass
-                    #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
+            #scaling this
+            try:
+                wdg.setAxisScale(2,0,max(profiles[-1]["plot_x"]),0)
+                self.reScalePlot(wdg, profiles, library)
+            except:
+                pass
+                #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
             wdg.plotWdg.replot()
 
         elif library == "Matplotlib" and has_mpl:
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
+            for i, profile in enumerate(profiles):
+                tmp_name = ("%s#%d") % (profile["layer"].name(), profile["band"])
                 if model1.item(i,0).data(Qt.CheckStateRole):
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["plot_x"], y_vals[i], gid = tmp_name, linewidth = 3, visible = True)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profile["plot_x"], profile["plot_y"], gid = tmp_name, linewidth = 3, visible = True)
                 else:
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["plot_x"], y_vals[i], gid = tmp_name, linewidth = 3, visible = False)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profile["plot_x"], profile["plot_y"], gid = tmp_name, linewidth = 3, visible = False)
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), tmp_name)
-                try:
-                    self.reScalePlot(wdg, profiles, library)
-                    wdg.plotWdg.figure.get_axes()[0].set_xbound( 0, max(profiles[len(profiles) - 1]["plot_x"]) )
-                except:
-                    pass
-                    #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
+            try:
+                self.reScalePlot(wdg, profiles, library)
+                wdg.plotWdg.figure.get_axes()[0].set_xbound( 0, max(profiles[- 1]["plot_x"]) )
+            except:
+                pass
+                #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
             wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
             wdg.plotWdg.draw()
 

@@ -66,7 +66,7 @@ class ProfileToolCore(QWidget):
         #the datas / results
         self.profiles = None        #dictionary where is saved the plotting data {"l":[l],"z":[z], "layer":layer1, "curve":curve1}
         #The line information
-        self.pointstoDraw = None
+        self.pointstoDraw = []
         #he renderer for temporary polyline
         #self.toolrenderer = ProfiletoolMapToolRenderer(self)
         self.toolrenderer = None
@@ -106,7 +106,7 @@ class ProfileToolCore(QWidget):
     #******************************************************************************************
 
 
-    def updateProfilFromFeatures(self, layer, features):
+    def updateProfilFromFeatures(self, layer, features, plotProfil=True):
         """Updates self.profiles from given feature list.
 
         This function extracts the list of coordinates from the given
@@ -117,7 +117,7 @@ class ProfileToolCore(QWidget):
         pointstoDraw = []
 
         # Remove selection from previous layer if it still exists
-        previousLayer = QgsMapLayerRegistry.instance().mapLayer(
+        previousLayer = QgsProject.instance().mapLayer(
                             self.previousLayerId)
         if previousLayer:
             previousLayer.removeSelection()
@@ -139,20 +139,23 @@ class ProfileToolCore(QWidget):
                     pointstoDraw += [[point2.x(),point2.y()]]
                     k += 1
 
-        self.updateProfil(pointstoDraw, False)
+        self.updateProfil(pointstoDraw, False, plotProfil)
 
-    def updateProfil(self, points1, removeSelection=True):
+    def updateProfil(self, points1, removeSelection=True, plotProfil=True):
         """Updates self.profiles from values in points1.
 
         This function can be called from updateProfilFromFeatures or from
         ProfiletoolMapToolRenderer (with a list of points from rubberband).
         """
-        if removeSelection and self.previousLayerId:
+        if removeSelection:
             # Be sure that we unselect anything in the previous layer.
-            self.previousLayerId.removeSelection()
+            previousLayer = QgsProject.instance().mapLayer(
+                                self.previousLayerId)
+            if previousLayer:
+                previousLayer.removeSelection()
         # replicate last point (bug #6680)
-        if points1:
-            points1 = points1 + [points1[-1]]
+        # if points1:
+        #    points1 = points1 + [points1[-1]]
         self.pointstoDraw = points1
         self.profiles = []
 
@@ -169,7 +172,8 @@ class ProfileToolCore(QWidget):
             self.profiles[i]["plot_x"] = []
             self.profiles[i]["plot_y"] = []
 
-        self.plotProfil()
+        if plotProfil:
+            self.plotProfil()
 
     def plotProfil(self, vertline = True):
         self.disableMouseCoordonates()
@@ -177,9 +181,9 @@ class ProfileToolCore(QWidget):
         self.removeClosedLayers(self.dockwidget.mdl)
         PlottingTool().clearData(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)
 
-        if not self.pointstoDraw:
-            self.updateCursorOnMap(self.x_cursor)
-            return
+        # if not self.pointstoDraw:
+        #    self.updateCursorOnMap(self.x_cursor)
+        #    return
 
         if vertline:                        #Plotting vertical lines at the node of polyline draw
             PlottingTool().drawVertLine(self.dockwidget, self.pointstoDraw, self.dockwidget.plotlibrary)
@@ -198,9 +202,8 @@ class ProfileToolCore(QWidget):
         profile_func = profilers.PLOT_PROFILERS[
                             self.dockwidget.plotComboBox.currentText()]
 
-        for i in range(0 , self.dockwidget.mdl.rowCount()):
-            self.profiles[i]["plot_x"], self.profiles[i]["plot_y"] = \
-                profile_func(self.profiles[i])
+        for profile in self.profiles:
+            profile["plot_x"], profile["plot_y"] = profile_func(profile)
 
         #plot profiles
         PlottingTool().attachCurves(self.dockwidget, self.profiles, self.dockwidget.mdl, self.dockwidget.plotlibrary)
@@ -218,11 +221,11 @@ class ProfileToolCore(QWidget):
         if self.pointstoDraw and self.doTracking:
             self.toolrenderer.rubberbandpoint.show()
             if x is not None:
-                points = [QgsPoint(p[0], p[1]) for p in self.pointstoDraw]
+                points = [QgsPoint(*p) for p in self.pointstoDraw]
                 geom =  qgis.core.QgsGeometry.fromPolyline(points)
                 pointprojected = geom.interpolate(x)
-
-                self.toolrenderer.rubberbandpoint.setCenter(
+                if pointprojected:
+                    self.toolrenderer.rubberbandpoint.setCenter(
                         pointprojected.asPoint())
         else:
             self.toolrenderer.rubberbandpoint.hide()
@@ -237,7 +240,7 @@ class ProfileToolCore(QWidget):
                     qgisLayerNames.append(self.iface.mapCanvas().layer(i).name())
             """
         elif int(QtCore.QT_VERSION_STR[0]) == 5 :    #qgis3
-            qgisLayerNames = [  layer.name()    for layer in qgis.core.QgsProject().instance().mapLayers().values()]
+            qgisLayerNames = [  layer.name()    for layer in qgis.core.QgsProject.instance().mapLayers().values()]
 
         #print('qgisLayerNames',qgisLayerNames)
         for i in range(0 , model1.rowCount()):
@@ -348,18 +351,22 @@ class ProfileToolCore(QWidget):
                     if len(pitems.listDataItems())>0:
                         #get data and nearest xy from cursor
                         compt = 0
-                        for  item in pitems.listDataItems():
-                            if item.isVisible() :
-                                x,y = item.getData()
-                                nearestindex = np.argmin( abs(np.array(x)-mousePoint.x()) )
-                                if compt == 0:
-                                    xtoplot = np.array(x)[nearestindex]
-                                    ytoplot = np.array(y)[nearestindex]
-                                else:
-                                    if abs( np.array(y)[nearestindex] - mousePoint.y() ) < abs( ytoplot -  mousePoint.y() ):
-                                        ytoplot = np.array(y)[nearestindex]
+                        try:
+                            for  item in pitems.listDataItems():
+                                if item.isVisible() :
+                                    x,y = item.getData()
+                                    nearestindex = np.argmin( abs(np.array(x)-mousePoint.x()) )
+                                    if compt == 0:
                                         xtoplot = np.array(x)[nearestindex]
-                                compt += 1
+                                        ytoplot = np.array(y)[nearestindex]
+                                    else:
+                                        if abs( np.array(y)[nearestindex] - mousePoint.y() ) < abs( ytoplot -  mousePoint.y() ):
+                                            ytoplot = np.array(y)[nearestindex]
+                                            xtoplot = np.array(x)[nearestindex]
+                                    compt += 1
+                        except ValueError:
+                            ytoplot = None
+                            xtoplot = None
                         #plot xy label and cursor
                         if not xtoplot is None and not ytoplot is None:
                             for item in self.dockwidget.plotWdg.allChildItems():

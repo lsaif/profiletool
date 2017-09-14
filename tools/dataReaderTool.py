@@ -60,15 +60,18 @@ class DataReaderTool:
         lbefore = 0
         # First create the list of x and y coordinates along the path
         # Also store distance projected on map.
-        for i in range(0,len(self.pointstoDraw)-2):  # work for each segment of polyline
+         # work for each segment of polyline
+        first_segment = True
+        for p_start, p_end in zip(self.pointstoDraw[:-1],
+                                  self.pointstoDraw[1:]):
 
             # for each polylines, set points x,y with map crs (%D) and layer crs (%C)
-            pointstoCal1 = self.tool.toLayerCoordinates(self.profiles["layer"] , QgsPointXY(self.pointstoDraw[i][0],self.pointstoDraw[i][1]))
-            pointstoCal2 = self.tool.toLayerCoordinates(self.profiles["layer"] , QgsPointXY(self.pointstoDraw[i+1][0],self.pointstoDraw[i+1][1]))
-            x1D = float(self.pointstoDraw[i][0])
-            y1D = float(self.pointstoDraw[i][1])
-            x2D = float(self.pointstoDraw[i+1][0])
-            y2D = float(self.pointstoDraw[i+1][1])
+            pointstoCal1 = self.tool.toLayerCoordinates(self.profiles["layer"] , QgsPointXY(*p_start))
+            pointstoCal2 = self.tool.toLayerCoordinates(self.profiles["layer"] , QgsPointXY(*p_end))
+            x1D = float(p_start[0])
+            y1D = float(p_start[1])
+            x2D = float(p_end[0])
+            y2D = float(p_end[1])
             x1C = float(pointstoCal1.x())
             y1C = float(pointstoCal1.y())
             x2C = float(pointstoCal2.x())
@@ -100,8 +103,9 @@ class DataReaderTool:
             dyC = (y2C - y1C) / steps
             #dlC = sqrt ((dxC*dxC) + (dyC*dyC))
             # reading data
-            if i == 0:
+            if first_segment:
                 debut = 0
+                first_segment = False
             else:
                 debut = 1
             for n in range(debut, steps + 1):

@@ -321,6 +321,8 @@ class PTDockWidget(QDockWidget, FormClass):
             layer1 = self.iface.activeLayer()
         """
         self.tableViewTool.addLayer(self.iface, self.mdl, layer1)
+        self.profiletoolcore.updateProfil(self.profiletoolcore.pointstoDraw,
+                                          False)
         layer1.dataChanged.connect(self.refreshPlot)
 
 
@@ -336,14 +338,17 @@ class PTDockWidget(QDockWidget, FormClass):
             except:
                 pass
             self.tableViewTool.removeLayer(self.mdl, index)
-
+        self.profiletoolcore.updateProfil(self.profiletoolcore.pointstoDraw,
+                                          False, True)
 
     def refreshPlot(self):
         #
         #    Refreshes/updates the plot without requiring the user to
         #    redraw the plot line (rubberband)
         #
-        self.profiletoolcore.plotProfil()
+        self.profiletoolcore.updateProfil(
+            self.profiletoolcore.pointstoDraw, False, True)
+
 
 
     def _onClick(self,index1):                    #action when clicking the tableview
@@ -382,6 +387,10 @@ class PTDockWidget(QDockWidget, FormClass):
         self.tolayerPushButton = []
         self.tableView = []
         self.verticalLayout = []
+        if self.mdl.rowCount() != self.profiletoolcore.profiles:
+            # keep the number of profiles and the model in sync.
+            self.profiletoolcore.updateProfil(
+                self.profiletoolcore.pointstoDraw, False, False)
         for i in range(0 , self.mdl.rowCount()):
             self.groupBox.append( QGroupBox(self.scrollAreaWidgetContents) )
             sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -524,7 +533,7 @@ class PTDockWidget(QDockWidget, FormClass):
         try:    #qgis2
             qgis.core.QgsMapLayerRegistry.instance().addMapLayer(vl)
         except:     #qgis3
-            qgis.core.QgsProject().instance().addMapLayer(vl)
+            qgis.core.QgsProject.instance().addMapLayer(vl)
 
 
 
