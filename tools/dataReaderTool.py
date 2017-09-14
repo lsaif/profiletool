@@ -37,7 +37,7 @@ class DataReaderTool:
     """def __init__(self):
         self.profiles = None"""
 
-    def dataRasterReaderTool(self, iface1,tool1, profile1, pointstoDraw1, fullresolution1):
+    def dataRasterReaderTool(self, iface1,tool1, profile1, pointstoDraw1, resolution_mode):
         """
         Return a dictionnary : {"layer" : layer read,
                                 "band" : band read,
@@ -84,12 +84,16 @@ class DataReaderTool:
             except ZeroDivisionError:
                 res = min(self.profiles["layer"].rasterUnitsPerPixelX(),self.profiles["layer"].rasterUnitsPerPixelY()) * 1.2
             #enventually use bigger step, wether full res is selected or not
-            steps = 1000  # max graph width in pixels
-            if fullresolution1:
-                steps = int(tlC/res)
+            if resolution_mode == "samples":
+                """Only take values at sample points, no intermediate values."""
+                steps = 1
             else:
-                if res != 0 and tlC/res < steps:
+                if res != 0:
+                    """Use the map's resolution."""
                     steps = int(tlC/res)
+                    if resolution_mode == "limited":
+                        """Hard coded limit to 1000 points per segment."""
+                        steps = min(steps, 1000)
                 else:
                     steps = 1000
 
