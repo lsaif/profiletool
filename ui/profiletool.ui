@@ -449,6 +449,9 @@ on graph with canvas</string>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>Unchecked, each polyline segment is profiled with a max of 1000 points. When checked, each segment is profiled with the map's full resolution.</string>
+             </property>
              <property name="text">
               <string>Full resolution enabled</string>
              </property>
