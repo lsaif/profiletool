@@ -167,10 +167,13 @@ class ProfileToolCore(QWidget):
             if self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer :
                 self.profiles[i], _, _ = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
             else:
-                if self.dockwidget.fullResolutionCheckBox.isChecked():
-                    resolution_mode = "full"
+                if self.dockwidget.profileInterpolationCheckBox.isChecked():
+                    if self.dockwidget.fullResolutionCheckBox.isChecked():
+                        resolution_mode = "full"
+                    else:
+                        resolution_mode = "limited"
                 else:
-                    resolution_mode = "limited"
+                    resolution_mode = "samples"
 
                 self.profiles[i] = DataReaderTool().dataRasterReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, resolution_mode)
             # Plotting coordinate values are initialized on plotProfil

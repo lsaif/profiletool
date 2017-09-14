@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>694</width>
+    <width>791</width>
     <height>380</height>
    </rect>
   </property>
@@ -33,7 +33,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="elideMode">
        <enum>Qt::ElideNone</enum>
@@ -176,6 +176,19 @@
                   </size>
                  </property>
                 </spacer>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="profileInterpolationCheckBox">
+                 <property name="toolTip">
+                  <string>When checked, profile is calculated along the polyline. Unchecked, only the values at polyline vertices are shown.</string>
+                 </property>
+                 <property name="text">
+                  <string>Interpolated profile</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
                </item>
                <item>
                 <widget class="QStackedWidget" name="stackedWidget">
@@ -409,7 +422,7 @@ on graph with canvas</string>
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>650</width>
+             <width>747</width>
              <height>294</height>
             </rect>
            </property>
