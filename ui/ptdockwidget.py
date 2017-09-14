@@ -120,6 +120,8 @@ class PTDockWidget(QDockWidget, FormClass):
 
         self.checkBox_showcursor.stateChanged.connect(self.showCursor)
 
+        self.fullResolutionCheckBox.stateChanged.connect(self.refreshPlot)
+        self.profileInterpolationCheckBox.stateChanged.connect(self.refreshPlot)
 
     #********************************************************************************
     #init things ****************************************************************
