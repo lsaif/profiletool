@@ -130,15 +130,20 @@ class ProfileToolCore(QWidget):
         if layer:
             layer.removeSelection()
             layer.select([f.id() for f in features])
+            first_segment = True
             for feature in features:
-                k = 0
+                if first_segment:
+                    k = 0
+                    first_segment = False
+                else:
+                    k = 1
                 while not feature.geometry().vertexAt(k) == QgsPoint(0,0):
                     point2 = self.toolrenderer.tool.toMapCoordinates(
                             layer, 
                             QgsPointXY(feature.geometry().vertexAt(k)))
                     pointstoDraw += [[point2.x(),point2.y()]]
-                    k += 1
-
+                    print("{} - {},{}".format(k, point2.x(),point2.y()))
+                    k += 1            
         self.updateProfil(pointstoDraw, False, plotProfil)
 
     def updateProfil(self, points1, removeSelection=True, plotProfil=True):
