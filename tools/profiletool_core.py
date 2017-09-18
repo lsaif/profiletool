@@ -144,7 +144,6 @@ class ProfileToolCore(QWidget):
                             layer, 
                             QgsPointXY(feature.geometry().vertexAt(k)))
                     pointstoDraw += [[point2.x(),point2.y()]]
-                    print("{} - {},{}".format(k, point2.x(),point2.y()))
                     k += 1
         self.updateProfil(pointstoDraw, False, plotProfil)
 
