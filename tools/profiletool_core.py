@@ -105,6 +105,8 @@ class ProfileToolCore(QWidget):
     #**************************** function part *************************************************
     #******************************************************************************************
 
+    def clearProfil(self):
+        self.updateProfilFromFeatures(None, [])
 
     def updateProfilFromFeatures(self, layer, features, plotProfil=True):
         """Updates self.profiles from given feature list.
@@ -143,7 +145,7 @@ class ProfileToolCore(QWidget):
                             QgsPointXY(feature.geometry().vertexAt(k)))
                     pointstoDraw += [[point2.x(),point2.y()]]
                     print("{} - {},{}".format(k, point2.x(),point2.y()))
-                    k += 1            
+                    k += 1
         self.updateProfil(pointstoDraw, False, plotProfil)
 
     def updateProfil(self, points1, removeSelection=True, plotProfil=True):
@@ -264,7 +266,7 @@ class ProfileToolCore(QWidget):
                 break
 
     def cleaning(self):
-        self.updateProfilFromFeatures(None, [])
+        self.clearProfil()
         if self.toolrenderer:
             self.toolrenderer.cleaning()
 

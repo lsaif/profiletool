@@ -95,6 +95,7 @@ class ProfiletoolMapToolRenderer():
             return
 
     def rightClicked(self,position):    #used to quit the current action
+        self.profiletool.clearProfil()
         self.cleaning()
 
     def leftClicked(self,position):        #Add point to analyse
@@ -150,7 +151,7 @@ class ProfiletoolMapToolRenderer():
                 self.profiletool.updateProfilFromFeatures(layer,
                  SelectLineTool.select_layer_features(None, layer, None))
             else:
-                self.profiletool.updateProfilFromFeatures(None, [])
+                self.profiletool.clearProfil()
 
     def setSelectionMethod(self, method):
         self.cleaning()
