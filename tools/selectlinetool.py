@@ -59,7 +59,7 @@ class SelectLineTool:
 
     @staticmethod
     def checkIsLineLayer(layer):
-        if layer.type() != QgsMapLayer.VectorLayer:
+        if layer is None or layer.type() != QgsMapLayer.VectorLayer:
             return False
         return layer.geometryType() == qgis.core.QgsWkbTypes.LineGeometry
 
