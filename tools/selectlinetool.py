@@ -44,11 +44,11 @@ class SelectLineTool:
         if layer == None or layer.type() != QgsMapLayer.VectorLayer:
             QMessageBox.warning( iface.mainWindow(), "Closest Feature Finder", "No vector layers selected" )
             return [pointstoDraw, layerindex, previousLayer]
-        if not layer.hasGeometryType():
+        if not layer.isSpatial():
             QMessageBox.warning( iface.mainWindow(), "Closest Feature Finder", "The selected layer has either no or unknown geometry" )
             return [pointstoDraw, layerindex, previousLayer]
         # get the point coordinates in the layer's CRS
-        point = tool.toLayerCoordinates(layer, QgsPoint(newPoints[0][0],newPoints[0][1]))
+        point = tool.toLayerCoordinates(layer, QgsPointXY(newPoints[0][0],newPoints[0][1]))
 
         
         if layerindex == None or layer != previousLayer:
@@ -129,8 +129,8 @@ class SelectLineTool:
             # find the nearest feature
             minDist = -1
             featureId = None
-            point = QgsGeometry.fromPoint(point)
-            f = QgsFeature()    
+            point = QgsGeometry.fromPointXY(point)
+            f = QgsFeature()
             while iter2.nextFeature(f):
                 geom = f.geometry()
                 distance = geom.distance(point)
@@ -159,7 +159,8 @@ class SelectLineTool:
         layer.select( closestFeature.id() )
         k = 0
         while not closestFeature.geometry().vertexAt(k) == QgsPoint(0,0):
-            point2 = tool.toMapCoordinates(layer, closestFeature.geometry().vertexAt(k) )
+            point2 = tool.toMapCoordinates(layer, QgsPointXY(
+                closestFeature.geometry().vertexAt(k)))
             pointstoDraw += [[point2.x(),point2.y()]]
             k += 1
             # replicate last point (bug #6680)

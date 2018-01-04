@@ -64,8 +64,8 @@ class DataReaderTool:
         for i in range(0,len(self.pointstoDraw)-2):  # work for each segment of polyline
 
             # for each polylines, set points x,y with map crs (%D) and layer crs (%C)
-            pointstoCal1 = self.tool.toLayerCoordinates(self.profiles["layer"] , QgsPoint(self.pointstoDraw[i][0],self.pointstoDraw[i][1]))
-            pointstoCal2 = self.tool.toLayerCoordinates(self.profiles["layer"] , QgsPoint(self.pointstoDraw[i+1][0],self.pointstoDraw[i+1][1]))
+            pointstoCal1 = self.tool.toLayerCoordinates(self.profiles["layer"] , QgsPointXY(self.pointstoDraw[i][0],self.pointstoDraw[i][1]))
+            pointstoCal2 = self.tool.toLayerCoordinates(self.profiles["layer"] , QgsPointXY(self.pointstoDraw[i+1][0],self.pointstoDraw[i+1][1]))
             x1D = float(self.pointstoDraw[i][0])
             y1D = float(self.pointstoDraw[i][1])
             x2D = float(self.pointstoDraw[i+1][0])
@@ -116,14 +116,14 @@ class DataReaderTool:
                 yC = y1C + dyC * n
                 attr = 0
                 if layer.type() == layer.PluginLayer and isProfilable(layer):
-                    ident = layer.identify(QgsPoint(xC,yC))
+                    ident = layer.identify(QgsPointXY(xC,yC))
                     try:
                         attr = float(ident[1].values()[choosenBand])
                     except:
                         pass
                 else: #RASTER LAYERS
                     # this code adapted from valuetool plugin
-                    ident = layer.dataProvider().identify(QgsPoint(xC,yC), QgsRaster.IdentifyFormatValue )
+                    ident = layer.dataProvider().identify(QgsPointXY(xC,yC), QgsRaster.IdentifyFormatValue )
                     #if ident is not None and ident.has_key(choosenBand+1):
                     if ident is not None and (choosenBand in ident.results()):
                         attr = ident.results()[choosenBand]
@@ -190,7 +190,7 @@ class DataReaderTool:
         xform = QgsCoordinateTransform(sourceCrs, destCrs)
         xformrev = QgsCoordinateTransform(destCrs, sourceCrs)
         
-        geom =  qgis.core.QgsGeometry.fromPolyline([QgsPoint(point[0], point[1]) for point in pointstoDraw1])
+        geom =  qgis.core.QgsGeometry.fromPolyline([QgsPointXY(point[0], point[1]) for point in pointstoDraw1])
         geominlayercrs = qgis.core.QgsGeometry(geom)
         tempresult = geominlayercrs.transform(xform)
         
@@ -241,11 +241,11 @@ class DataReaderTool:
         profile['z'] = [projectedpoint[5] for projectedpoint in projectedpoints]
         profile['x'] = [projectedpoint[1] for projectedpoint in projectedpoints]
         profile['y'] = [projectedpoint[2] for projectedpoint in projectedpoints]
-        
-        multipoly = qgis.core.QgsGeometry.fromMultiPolyline([[xform.transform(QgsPoint(projectedpoint[1], projectedpoint[2]), qgis.core.QgsCoordinateTransform.ReverseTransform) , 
-                                                              xform.transform(QgsPoint(projectedpoint[6], projectedpoint[7]), qgis.core.QgsCoordinateTransform.ReverseTransform)  ] for projectedpoint in projectedpoints])
-        
-        
+
+        multipoly = qgis.core.QgsGeometry.fromMultiPolyline([[xform.transform(QgsPointXY(projectedpoint[1], projectedpoint[2]), qgis.core.QgsCoordinateTransform.ReverseTransform) ,
+                                                              xform.transform(QgsPointXY(projectedpoint[6], projectedpoint[7]), qgis.core.QgsCoordinateTransform.ReverseTransform)  ] for projectedpoint in projectedpoints])
+
+
         return profile, buffergeom, multipoly
         
 

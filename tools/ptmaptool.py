@@ -75,8 +75,8 @@ class ProfiletoolMapToolRenderer():
                     self.profiletool.rubberband.reset(qgis.core.QgsWkbTypes.LineGeometry)
                         
                 for i in range(0,len(self.pointstoDraw)):
-                     self.profiletool.rubberband.addPoint(QgsPoint(self.pointstoDraw[i][0],self.pointstoDraw[i][1]))
-                self.profiletool.rubberband.addPoint(QgsPoint(mapPos.x(),mapPos.y()))
+                     self.profiletool.rubberband.addPoint(QgsPointXY(self.pointstoDraw[i][0],self.pointstoDraw[i][1]))
+                self.profiletool.rubberband.addPoint(QgsPointXY(mapPos.x(),mapPos.y()))
         if self.profiletool.dockwidget.selectionmethod == 1:
             return
 
