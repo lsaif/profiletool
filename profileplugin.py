@@ -65,20 +65,20 @@ class ProfilePlugin:
         self.iface.addToolBarIcon(self.action)
         self.iface.addPluginToMenu("&Profile Tool", self.action)
         self.iface.addPluginToMenu("&Profile Tool", self.aboutAction)
-        
-        
+
+
 
     def unload(self):
         try:
             self.profiletool.dockwidget.close()
         except:
             pass
-            
+
         try:
             self.canvas.mapToolSet.disconnect(self.mapToolChanged)
         except:
             pass
-        
+
         self.iface.removeToolBarIcon(self.action)
         self.iface.removePluginMenu("&Profile Tool", self.action)
         self.iface.removePluginMenu("&Profile Tool", self.aboutAction)
@@ -95,26 +95,20 @@ class ProfilePlugin:
             self.profiletool.activateProfileMapTool()
         else:
             self.profiletool.activateProfileMapTool()
-        
 
-    def cleaning(self):  
+
+    def cleaning(self):
         self.dockOpened = False
-        self.profiletool.rubberband.reset(self.profiletool.polygon)
-        self.profiletool.rubberbandbuf.reset()
-        self.profiletool.rubberbandpoint.hide()
-        self.canvas.unsetMapTool(self.profiletool.toolrenderer.tool)
+        self.profiletool.cleaning()
+        if self.profiletool.toolrenderer:
+            self.canvas.unsetMapTool(self.profiletool.toolrenderer.tool)
         self.canvas.setMapTool(self.profiletool.saveTool)
-
         self.iface.mainWindow().statusBar().showMessage( "" )
-        
+
     def mapToolChanged(self,newtool,oldtool = None):
         pass
         #print('maptoolchanged',newtool,oldtool)
-            
+
     def about(self):
         from ui.dlgabout import DlgAbout
         DlgAbout(self.iface.mainWindow()).exec_()
-
-        
-
-        

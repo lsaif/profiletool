@@ -41,7 +41,7 @@ from math import sqrt
 import numpy as np
 
 from .. import pyqtgraph as pg
-from ..pyqtgraph import exporters 
+from ..pyqtgraph import exporters
 pg.setConfigOption('background', 'w')
 
 from .. import dxfwrite
@@ -55,8 +55,8 @@ try:
     import itertools # only needed for Qwt plot
 except:
     pass
-    
-    
+
+
 try:
     from matplotlib import *
     import matplotlib
@@ -68,10 +68,18 @@ except:
 
 
 class PlottingTool:
+    """This class manages profile plotting.
 
+    A call to changePlotWidget creates the widget where profiles will be
+    plotted.
+    Subsequent calls to functions on this class pass along the wdg object
+    where profiles are to be plotted.
+    Input data is the "profiles" vector, and the ["plot_x"] and ["plot_y"] values
+    are used as the data series x and y values respectively.
+    """
 
     def changePlotWidget(self, library, frame_for_plot):
-        
+
         if library == "PyQtGraph":
             plotWdg = pg.PlotWidget()
             plotWdg.showGrid(True,True,0.5)
@@ -84,14 +92,14 @@ class PlottingTool:
             ytextitem = pg.TextItem('Y : / ', color = (0,0,0) , border = pg.mkPen(color=(0, 0, 0),  width=1), fill=pg.mkBrush('w'), anchor=(0,0))
             plotWdg.addItem(xtextitem)
             plotWdg.addItem(ytextitem)
-            
+
             plotWdg.getViewBox().autoRange( items=[])
             plotWdg.getViewBox().disableAutoRange()
             plotWdg.getViewBox().border = pg.mkPen(color=(0, 0, 0),  width=1)
-            
+
             return plotWdg
-        
-        
+
+
         elif library == "Qwt5" and has_qwt:
             plotWdg = QwtPlot(frame_for_plot)
             sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -115,7 +123,7 @@ class PlottingTool:
             grid.setPen(QPen(QColor('grey'), 0, Qt.DotLine))
             grid.attach(plotWdg)
             return plotWdg
-            
+
         elif library == "Matplotlib" and has_mpl:
             from matplotlib.figure import Figure
             if int(qgis.PyQt.QtCore.QT_VERSION_STR[0]) == 4 :
@@ -141,14 +149,14 @@ class PlottingTool:
             sizePolicy.setVerticalStretch(0)
             canvas.setSizePolicy(sizePolicy)
             return canvas
-            
-        
-        
+
+
+
 
     def drawVertLine(self,wdg, pointstoDraw, library):
         if library == "PyQtGraph":
             pass
-        
+
         elif library == "Qwt5" and has_qwt:
             profileLen = 0
             for i in range(0, len(pointstoDraw)-1):
@@ -176,33 +184,31 @@ class PlottingTool:
 
 
     def attachCurves(self, wdg, profiles, model1, library):
-    
+
         if library == "PyQtGraph":
             #cretae graph
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
+            for i, profile in enumerate(profiles):
+                tmp_name = ("%s#%d") % (profile["layer"].name(), profile["band"])
                 #case line outside the raster
-                y = np.array(profiles[i]["z"], dtype=np.float)  #replace None value by np.nan
-                x = np.array(profiles[i]["l"])
+                y = np.array(profile["plot_y"], dtype=np.float)  #replace None value by np.nan
+                x = np.array(profile["plot_x"])
                 wdg.plotWdg.plot(x, y, pen=pg.mkPen( model1.item(i,1).data(Qt.BackgroundRole),  width=2) , name = tmp_name)
-            #set it visible or not
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
+                #set it visible or not
                 for item in wdg.plotWdg.getPlotItem().listDataItems():
                     if item.name() == tmp_name:
                         item.setVisible(model1.item(i,0).data(Qt.CheckStateRole))
-                        
-            
-    
+
+
+
         elif library == "Qwt5" and has_qwt:
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"]+1)
+            for i, profile in enumerate(profiles):
+                tmp_name = ("%s#%d") % (profile["layer"].name(), profile["band"]+1)
 
                 # As QwtPlotCurve doesn't support nodata, split the data into single lines
                 # with breaks wherever data is None.
                 # Prepare two lists of coordinates (xx and yy). Make x=None whenever y==None.
-                xx = profiles[i]["l"]
-                yy = profiles[i]["z"]
+                xx = profile["plot_x"]
+                yy = profile["plot_y"]
                 for j in range(len(yy)):
                     if yy[j] is None:
                         xx[j] = None
@@ -222,76 +228,71 @@ class PlottingTool:
                     else:
                         curve.setVisible(False)
 
-                #scaling this
-                try:
-                    wdg.setAxisScale(2,0,max(profiles[len(profiles) - 1]["l"]),0)
-                    self.reScalePlot(wdg, profiles, library)
-                except:
-                    pass
-                    #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
+            #scaling this
+            try:
+                wdg.setAxisScale(2,0,max(profiles[-1]["plot_x"]),0)
+                self.reScalePlot(wdg, profiles, library)
+            except:
+                pass
+                #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
             wdg.plotWdg.replot()
-            
+
         elif library == "Matplotlib" and has_mpl:
-            for i in range(0 , model1.rowCount()):
-                tmp_name = ("%s#%d") % (profiles[i]["layer"].name(), profiles[i]["band"])
+            for i, profile in enumerate(profiles):
+                tmp_name = ("%s#%d") % (profile["layer"].name(), profile["band"])
                 if model1.item(i,0).data(Qt.CheckStateRole):
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i]["z"], gid = tmp_name, linewidth = 3, visible = True)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profile["plot_x"], profile["plot_y"], gid = tmp_name, linewidth = 3, visible = True)
                 else:
-                    wdg.plotWdg.figure.get_axes()[0].plot(profiles[i]["l"], profiles[i]["z"], gid = tmp_name, linewidth = 3, visible = False)
+                    wdg.plotWdg.figure.get_axes()[0].plot(profile["plot_x"], profile["plot_y"], gid = tmp_name, linewidth = 3, visible = False)
                 self.changeColor(wdg, "Matplotlib", model1.item(i,1).data(Qt.BackgroundRole), tmp_name)
-                try:
-                    self.reScalePlot(wdg, profiles, library)
-                    wdg.plotWdg.figure.get_axes()[0].set_xbound( 0, max(profiles[len(profiles) - 1]["l"]) )
-                except:
-                    pass
-                    #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
+            try:
+                self.reScalePlot(wdg, profiles, library)
+                wdg.plotWdg.figure.get_axes()[0].set_xbound( 0, max(profiles[- 1]["plot_x"]) )
+            except:
+                pass
+                #self.iface.mainWindow().statusBar().showMessage("Problem with setting scale of plotting")
             wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
             wdg.plotWdg.draw()
 
 
-    def findMin(self,profiles, nr):
-        minVal = min( z for z in profiles[nr]["z"] if z is not None )
-        #maxVal = max( profiles[nr]["z"] ) + 1
-        maxVal = max( z for z in profiles[nr]["z"] if z is not None ) + 1
-        d = ( maxVal - minVal ) or 1
+    def findMin(self, values):
+        minVal = min( z for z in values if z is not None )
         return minVal
 
 
-    def findMax(self,profiles, nr):
-        minVal = min( z for z in profiles[nr]["z"] if z is not None )
-        #maxVal = max( profiles[nr]["z"] ) + 1
-        maxVal = max( z for z in profiles[nr]["z"] if z is not None ) + 1
-        d = ( maxVal - minVal ) or 1
+    def findMax(self, values):
+        maxVal = max( z for z in values if z is not None )
         return maxVal
-        
-        
-        
+
+
+
     def plotRangechanged(self, wdg, library):
-    
+
         if library == "PyQtGraph":
             range = wdg.plotWdg.getViewBox().viewRange()
             wdg.disconnectYSpinbox()
             wdg.sbMaxVal.setValue(range[1][1])
             wdg.sbMinVal.setValue(range[1][0])
             wdg.connectYSpinbox()
-            
+
 
     def reScalePlot(self, wdg, profiles, library,auto = False):                         # called when spinbox value changed
         if profiles == None:
             return
         minimumValue = wdg.sbMinVal.value()
         maximumValue = wdg.sbMaxVal.value()
-        
+
+        y_vals = [p["plot_y"] for p in profiles]
+
         if minimumValue == maximumValue:
             # Automatic mode
             minimumValue = 1000000000
             maximumValue = -1000000000
-            for i in range(0,len(profiles)):
-                if profiles[i]["layer"] != None and len([z for z in profiles[i]["z"] if z is not None]) > 0:
-                    if self.findMin(profiles, i) < minimumValue:
-                        minimumValue = self.findMin(profiles, i)
-                    if self.findMax(profiles, i) > maximumValue:
-                        maximumValue = self.findMax(profiles, i)
+            for i in range(0,len(y_vals)):
+                if profiles[i]["layer"] != None and len([z for z in y_vals[i] if z is not None]) > 0:
+                    minimumValue = min(self.findMin(y_vals[i]), minimumValue)
+                    maximumValue = max(self.findMax(y_vals[i]) + 1,
+                                       maximumValue)
                     wdg.sbMaxVal.setValue(maximumValue)
                     wdg.sbMinVal.setValue(minimumValue)
                     wdg.sbMaxVal.setEnabled(True)
@@ -306,15 +307,15 @@ class PlottingTool:
                 else:
                     wdg.plotWdg.getViewBox().setYRange( minimumValue,maximumValue , padding = 0 )
                 wdg.connectPlotRangechanged()
-                
-                
+
+
             if library == "Qwt5" and has_qwt:
                 wdg.plotWdg.setAxisScale(0,minimumValue,maximumValue,0)
                 wdg.plotWdg.replot()
-                
+
             elif library == "Matplotlib" and has_mpl:
                 if auto:
-                    wdg.sbMaxVal.setValue(wdg.sbMinVal.value()) 
+                    wdg.sbMaxVal.setValue(wdg.sbMinVal.value())
                     self.reScalePlot(wdg, profiles, library)
                 else:
                     wdg.plotWdg.figure.get_axes()[0].set_ybound(minimumValue,maximumValue)
@@ -325,7 +326,7 @@ class PlottingTool:
     def clearData(self, wdg, profiles, library):                             # erase one of profiles
         if not profiles:
             return
-            
+
         if library == "PyQtGraph":
             pitems = wdg.plotWdg.getPlotItem().listDataItems()
             for item in pitems:
@@ -334,12 +335,12 @@ class PlottingTool:
                 wdg.plotWdg.scene().sigMouseMoved.disconnect(self.mouseMoved)
             except:
                 pass
-            
+
         elif library == "Qwt5" and has_qwt:
             wdg.plotWdg.clear()
             for i in range(0,len(profiles)):
-                profiles[i]["l"] = []
-                profiles[i]["z"] = []
+                profiles[i]["plot_x"] = []
+                profiles[i]["plot_y"] = []
             temp1 = wdg.plotWdg.itemList()
             for j in range(len(temp1)):
                 if temp1[j].rtti() == QwtPlotItem.Rtti_PlotCurve:
@@ -354,19 +355,19 @@ class PlottingTool:
         wdg.sbMinVal.setEnabled(False)
         wdg.sbMaxVal.setValue(0)
         wdg.sbMinVal.setValue(0)
-        
-        
-        
+
+
+
 
 
     def changeColor(self,wdg, library, color1, name):                    #Action when clicking the tableview - color
-    
+
         if library == "PyQtGraph":
             pitems = wdg.plotWdg.getPlotItem()
             for i, item in enumerate(pitems.listDataItems()):
                 if item.name() == name:
                     item.setPen( color1,  width=2)
-                    
+
         if library == "Qwt5":
             temp1 = wdg.plotWdg.itemList()
             for i in range(len(temp1)):
@@ -375,7 +376,7 @@ class PlottingTool:
                     curve.setPen(QPen(color1, 3))
                     wdg.plotWdg.replot()
                     # break  # Don't break as there may be multiple curves with a common name (segments separated with None values)
-                    
+
         if library == "Matplotlib":
             temp1 = wdg.plotWdg.figure.get_axes()[0].get_lines()
             for i in range(len(temp1)):
@@ -388,7 +389,7 @@ class PlottingTool:
 
 
     def changeAttachCurve(self, wdg, library, bool, name):                #Action when clicking the tableview - checkstate
-    
+
         if library == "PyQtGraph":
             pitems = wdg.plotWdg.getPlotItem()
             for i, item in enumerate(pitems.listDataItems()):
@@ -397,7 +398,7 @@ class PlottingTool:
                         item.setVisible(True)
                     else:
                         item.setVisible(False)
-                        
+
         elif library == "Qwt5":
             temp1 = wdg.plotWdg.itemList()
             for i in range(len(temp1)):
@@ -409,9 +410,9 @@ class PlottingTool:
                         curve.setVisible(False)
                     wdg.plotWdg.replot()
                     break
-                    
+
         if library == "Matplotlib":
-            
+
             temp1 = wdg.plotWdg.figure.get_axes()[0].get_lines()
             for i in range(len(temp1)):
                 if name == str(temp1[i].get_gid()):
@@ -422,7 +423,7 @@ class PlottingTool:
                     wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
                     wdg.plotWdg.figure.canvas.draw()
                     wdg.plotWdg.draw()
-                    
+
                     break
 
 
@@ -479,25 +480,25 @@ class PlottingTool:
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
         #fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As",wdg.profiletoolcore.loaddirectory,"Profile of " + name + ".svg","Scalable Vector Graphics (*.svg)")
-        fileName = QFileDialog.getSaveFileName(parent = iface.mainWindow(), 
-                                               caption = "Save As", 
-                                               directory = wdg.profiletoolcore.loaddirectory, 
-                                               #filter = "Profile of " + name + ".png", 
+        fileName = QFileDialog.getSaveFileName(parent = iface.mainWindow(),
+                                               caption = "Save As",
+                                               directory = wdg.profiletoolcore.loaddirectory,
+                                               #filter = "Profile of " + name + ".png",
                                                filter = "Scalable Vector Graphics (*.svg)")
-        
-        
+
+
         if fileName:
             if isinstance(fileName,tuple):  #pyqt5 case
                 fileName = fileName[0]
-                
+
             wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
             qgis.PyQt.QtCore.QSettings().setValue("profiletool/lastdirectory", wdg.profiletoolcore.loaddirectory)
-                
+
             if library == "PyQtGraph":
                 exporter = exporters.SVGExporter(wdg.plotWdg.getPlotItem().scene())
                 #exporter =  pg.exporters.ImageExporter(wdg.plotWdg.getPlotItem()
                 exporter.export(fileName = fileName)
-                
+
             elif library == "Qwt5" and has_qwt:
                 printer = QSvgGenerator()
                 printer.setFileName(fileName)
@@ -511,20 +512,20 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName = QFileDialog.getSaveFileName(parent = iface.mainWindow(), 
-                                               caption = "Save As", 
-                                               directory = wdg.profiletoolcore.loaddirectory, 
-                                               #filter = "Profile of " + name + ".png", 
+        fileName = QFileDialog.getSaveFileName(parent = iface.mainWindow(),
+                                               caption = "Save As",
+                                               directory = wdg.profiletoolcore.loaddirectory,
+                                               #filter = "Profile of " + name + ".png",
                                                filter = "Portable Network Graphics (*.png)")
-        
+
         if fileName:
 
             if isinstance(fileName,tuple):  #pyqt5 case
                 fileName = fileName[0]
-                
+
             wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
             qgis.PyQt.QtCore.QSettings().setValue("profiletool/lastdirectory", wdg.profiletoolcore.loaddirectory)
-                
+
             if library == "PyQtGraph":
                 exporter =  exporters.ImageExporter(wdg.plotWdg.getPlotItem())
                 exporter.export(fileName)
@@ -532,26 +533,26 @@ class PlottingTool:
                 QPixmap.grabWidget(wdg.plotWdg).save(fileName, "PNG")
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.savefig(str(fileName))
-                
+
     def outDXF(self, iface, wdg, mdl, library, profiles):
-                    
+
         for i in range (0,mdl.rowCount()):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
         #fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As",wdg.profiletoolcore.loaddirectory,"Profile of " + name + ".dxf","dxf (*.dxf)")
-        fileName = QFileDialog.getSaveFileName(parent = iface.mainWindow(), 
-                                               caption = "Save As", 
-                                               directory = wdg.profiletoolcore.loaddirectory, 
-                                               #filter = "Profile of " + name + ".png", 
+        fileName = QFileDialog.getSaveFileName(parent = iface.mainWindow(),
+                                               caption = "Save As",
+                                               directory = wdg.profiletoolcore.loaddirectory,
+                                               #filter = "Profile of " + name + ".png",
                                                filter = "dxf (*.dxf)")
-        if fileName:   
+        if fileName:
             if isinstance(fileName,tuple):  #pyqt5 case
                 fileName = fileName[0]
-                
+
             wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
             qgis.PyQt.QtCore.QSettings().setValue("profiletool/lastdirectory", wdg.profiletoolcore.loaddirectory)
-                
+
             drawing = dxf.drawing(fileName)
             for profile in profiles:
                 name = profile['layer'].name()

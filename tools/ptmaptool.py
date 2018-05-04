@@ -45,151 +45,161 @@ class ProfiletoolMapToolRenderer():
         self.iface = self.profiletool.iface
         self.canvas = self.profiletool.iface.mapCanvas()
         self.tool = ProfiletoolMapTool(self.canvas,self.profiletool.plugincore.action)        #the mouselistener
-        self.pointstoDraw = []  #Polyline in mapcanvas CRS analysed
-        self.pointstoCal = []
+        self.pointstoDraw = []  #Polyline being drawn in freehand mode
         self.dblclktemp = None        #enable disctinction between leftclick and doubleclick
-        self.lastFreeHandPoints = []
-        
-        
+        #the rubberband
+        self.polygon = False
+        self.rubberband = QgsRubberBand(self.iface.mapCanvas(), self.polygon)
+        self.rubberband.setWidth(2)
+        self.rubberband.setColor(QColor(Qt.red))
+
+        self.rubberbandpoint = QgsVertexMarker(self.iface.mapCanvas())
+        self.rubberbandpoint.setColor(QColor(Qt.red))
+        self.rubberbandpoint.setIconSize(5)
+        self.rubberbandpoint.setIconType(QgsVertexMarker.ICON_BOX) # or ICON_CROSS, ICON_X
+        self.rubberbandpoint.setPenWidth(3)
+
+        self.rubberbandbuf = QgsRubberBand(self.iface.mapCanvas())
+        self.rubberbandbuf.setWidth(1)
+        self.rubberbandbuf.setColor(QColor(Qt.blue))
+
         self.textquit0 = "Click for polyline and double click to end (right click to cancel then quit)"
-        self.textquit1 = "Select the polyline in a vector layer (Right click to quit)"
-        
-        self.layerindex = None                            #for selection mode
-        self.previousLayer = None                        #for selection mode
-    
+        self.textquit1 = "Select the polyline feature in a vector layer (Right click to quit)"
+        self.textquit2 = "Select the polyline vector layer (Right click to quit)"
+
+        self.setSelectionMethod(0)
+
+    def resetRubberBand(self):
+        # TODO: use version check for qgis3 too.
+        try:    #qgis2
+            if QGis.QGIS_VERSION_INT >= 10900:
+                self.rubberband.reset(QGis.Line)
+            else:
+                self.rubberband.reset(self.polygon)
+        except: #qgis3
+            self.rubberband.reset(qgis.core.QgsWkbTypes.LineGeometry)
 
 #************************************* Mouse listener actions ***********************************************
 
     def moved(self,position):            #draw the polyline on the temp layer (rubberband)
-        if self.profiletool.dockwidget.selectionmethod == 0:
+        if self.selectionmethod == 0:
             if len(self.pointstoDraw) > 0:
                 #Get mouse coords
                 mapPos = self.canvas.getCoordinateTransform().toMapCoordinates(position["x"],position["y"])
                 #Draw on temp layer
-                try:    #qgis2
-                    if QGis.QGIS_VERSION_INT >= 10900:
-                        self.profiletool.rubberband.reset(QGis.Line)
-                    else:
-                        self.profiletool.rubberband.reset(self.profiletool.polygon)
-                except: #qgis3
-                    self.profiletool.rubberband.reset(qgis.core.QgsWkbTypes.LineGeometry)
-                        
+                self.resetRubberBand()
                 for i in range(0,len(self.pointstoDraw)):
-                     self.profiletool.rubberband.addPoint(QgsPoint(self.pointstoDraw[i][0],self.pointstoDraw[i][1]))
-                self.profiletool.rubberband.addPoint(QgsPoint(mapPos.x(),mapPos.y()))
-        if self.profiletool.dockwidget.selectionmethod == 1:
+                     self.rubberband.addPoint(QgsPointXY(self.pointstoDraw[i][0],self.pointstoDraw[i][1]))
+                self.rubberband.addPoint(QgsPointXY(mapPos.x(),mapPos.y()))
+        if self.selectionmethod in (1, 2):
             return
 
-
-
     def rightClicked(self,position):    #used to quit the current action
-        if self.profiletool.dockwidget.selectionmethod == 0:
-            mapPos = self.canvas.getCoordinateTransform().toMapCoordinates(position["x"],position["y"])
-            newPoints = [[mapPos.x(), mapPos.y()]]
-            #if newPoints == self.lastClicked: return # sometimes a strange "double click" is given
-            if len(self.pointstoDraw) > 0:
-                self.pointstoDraw = []
-                self.pointstoCal = []
-                self.profiletool.rubberband.reset(self.profiletool.polygon)
-                self.profiletool.rubberbandbuf.reset()
-                self.profiletool.rubberbandpoint.hide()
-            else:
-                self.cleaning()
-        if self.profiletool.dockwidget.selectionmethod == 1:
-            try:
-                self.previousLayer.removeSelection( False )
-            except:
-                self.iface.mainWindow().statusBar().showMessage("error right click")
-            self.cleaning()
-
-
+        self.profiletool.clearProfil()
+        self.cleaning()
 
     def leftClicked(self,position):        #Add point to analyse
         mapPos = self.canvas.getCoordinateTransform().toMapCoordinates(position["x"],position["y"])
         newPoints = [[mapPos.x(), mapPos.y()]]
         if self.profiletool.doTracking :
-            self.profiletool.rubberbandpoint.hide()
-            
-        if self.profiletool.dockwidget.selectionmethod == 0:
+            self.rubberbandpoint.hide()
+
+        if self.selectionmethod == 0:
             if newPoints == self.dblclktemp:
                 self.dblclktemp = None
                 return
             else :
                 if len(self.pointstoDraw) == 0:
-                    self.profiletool.rubberband.reset(self.profiletool.polygon)
-                    self.profiletool.rubberbandbuf.reset()
+                    self.resetRubberBand()
+                    self.rubberbandbuf.reset()
                 self.pointstoDraw += newPoints
-        if self.profiletool.dockwidget.selectionmethod == 1:
-            result = SelectLineTool().getPointTableFromSelectedLine(self.iface, self.tool, newPoints, self.layerindex, self.previousLayer , self.pointstoDraw)
-            self.pointstoDraw = result[0]
-            self.layerindex = result[1]
-            self.previousLayer = result[2]
-            #self.profiletool.calculateProfil(self.pointstoDraw, self.mdl,self.plotlibrary, False)
-            self.profiletool.calculateProfil(self.pointstoDraw, False)
-            self.lastFreeHandPoints = self.pointstoDraw
-            self.pointstoDraw = []
-            self.iface.mainWindow().statusBar().showMessage(self.textquit1)
+                self.profiletool.updateProfil(self.pointstoDraw)
+        if self.selectionmethod in (1, 2):
+            if self.selectionmethod == 1:
+                method = "feature"
+                message = self.textquit1
+            else:
+                method = "layer"
+                message = self.textquit2
+            result = SelectLineTool(
+                    selectionMethod=method).getPointTableFromSelectedLine(
+                            self.iface, self.tool, newPoints)
+            self.profiletool.updateProfilFromFeatures(result[0], result[1])
+
+            self.iface.mainWindow().statusBar().showMessage(message)
 
     def doubleClicked(self,position):
-        if self.profiletool.dockwidget.selectionmethod == 0:
+        if self.selectionmethod == 0:
             #Validation of line
             mapPos = self.canvas.getCoordinateTransform().toMapCoordinates(position["x"],position["y"])
             newPoints = [[mapPos.x(), mapPos.y()]]
             self.pointstoDraw += newPoints
             #launch analyses
             self.iface.mainWindow().statusBar().showMessage(str(self.pointstoDraw))
-            self.profiletool.calculateProfil(self.pointstoDraw)
+            self.profiletool.updateProfil(self.pointstoDraw)
             #Reset
-            self.lastFreeHandPoints = self.pointstoDraw
             self.pointstoDraw = []
             #temp point to distinct leftclick and dbleclick
             self.dblclktemp = newPoints
             self.iface.mainWindow().statusBar().showMessage(self.textquit0)
-        if self.profiletool.dockwidget.selectionmethod == 1:
+        if self.selectionmethod in (1, 2):
             return
-            
-            
+
+    def currentLayerChanged(self, layer):
+        if self.selectionmethod == 2:
+            if SelectLineTool.checkIsLineLayer(layer):
+                self.profiletool.updateProfilFromFeatures(layer,
+                 SelectLineTool.select_layer_features(None, layer, None))
+            else:
+                self.profiletool.clearProfil()
+
+    def setSelectionMethod(self, method):
+        self.cleaning()
+        self.selectionmethod = method
+        if method == 0:
+            self.tool.setCursor(Qt.CrossCursor)
+            self.iface.mainWindow().statusBar().showMessage(self.textquit0)
+        elif method == 1:
+            self.tool.setCursor(Qt.PointingHandCursor)
+            self.iface.mainWindow().statusBar().showMessage(self.textquit1)
+        elif method == 2:
+            self.tool.setCursor(Qt.PointingHandCursor)
+            self.iface.mainWindow().statusBar().showMessage(self.textquit2)
+        self.currentLayerChanged(self.iface.activeLayer())
+
+    def setBufferGeometry(self, geoms):
+        self.rubberbandbuf.reset()
+        for g in geoms:
+            self.rubberbandbuf.addGeometry(g, None)
+
     def cleaning(self):            #used on right click
-        try:
-            #print str(self.previousLayer)
-            self.previousLayer.removeSelection(False)
-            #self.previousLayer.select(None)
-        except:
-            pass
-        self.profiletool.rubberbandpoint.hide()
-        self.canvas.unsetMapTool(self.tool)
-        self.canvas.setMapTool(self.profiletool.saveTool)
-        self.profiletool.rubberband.reset(self.profiletool.polygon)
-        self.profiletool.rubberbandbuf.reset()
+        self.pointstoDraw = []
+        self.rubberbandpoint.hide()
+        self.resetRubberBand()
+        self.rubberbandbuf.reset()
         self.iface.mainWindow().statusBar().showMessage( "" )
-        
-            
-            
+
     def connectTool(self):
-            
         self.tool.moved.connect(self.moved)
         self.tool.rightClicked.connect(self.rightClicked)
         self.tool.leftClicked.connect(self.leftClicked)
         self.tool.doubleClicked.connect(self.doubleClicked)
         self.tool.desactivate.connect(self.deactivate)
-        
-        if self.profiletool.dockwidget.selectionmethod == 0:
-            self.iface.mainWindow().statusBar().showMessage(self.textquit0)
-        elif self.profiletool.dockwidget.selectionmethod == 1:
-            self.iface.mainWindow().statusBar().showMessage(self.textquit1)
-
+        self.iface.currentLayerChanged.connect(
+            self.currentLayerChanged)
 
     def deactivate(self):        #enable clean exit of the plugin
-            
+        self.cleaning()
         self.tool.moved.disconnect(self.moved)
         self.tool.rightClicked.disconnect(self.rightClicked)
         self.tool.leftClicked.disconnect(self.leftClicked)
         self.tool.doubleClicked.disconnect(self.doubleClicked)
         self.tool.desactivate.disconnect(self.deactivate)
-        self.profiletool.rubberbandpoint.hide()
-        self.profiletool.rubberband.reset(self.profiletool.polygon)
-        
-        self.iface.mainWindow().statusBar().showMessage("")
+        self.iface.currentLayerChanged.disconnect(
+            self.currentLayerChanged)
+        self.canvas.unsetMapTool(self.tool)
+        self.canvas.setMapTool(self.profiletool.saveTool)
+
 
 
 

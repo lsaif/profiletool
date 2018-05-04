@@ -45,8 +45,7 @@ from .dataReaderTool import DataReaderTool
 from .plottingtool import PlottingTool
 from .ptmaptool import ProfiletoolMapTool, ProfiletoolMapToolRenderer
 from ..ui.ptdockwidget import PTDockWidget
-
-
+from . import profilers
 
 class ProfileToolCore(QWidget):
 
@@ -54,77 +53,117 @@ class ProfileToolCore(QWidget):
         QWidget.__init__(self, parent)
         self.iface = iface
         self.plugincore = plugincore
-        #the rubberband
-        self.polygon = False
-        self.rubberband = QgsRubberBand(self.iface.mapCanvas(), self.polygon)
-        self.rubberband.setWidth(2)
-        self.rubberband.setColor(QtGui.QColor(QtCore.Qt.red))
-        self.rubberbandpoint = QgsVertexMarker(self.iface.mapCanvas())
-        self.rubberbandpoint.setColor(QtGui.QColor(QtCore.Qt.red))
-        self.rubberbandpoint.setIconSize(5)
-        self.rubberbandpoint.setIconType(QgsVertexMarker.ICON_BOX) # or ICON_CROSS, ICON_X
-        self.rubberbandpoint.setPenWidth(3)
-        
-        self.rubberbandbuf = QgsRubberBand(self.iface.mapCanvas())
-        self.rubberbandbuf.setWidth(1)
-        self.rubberbandbuf.setColor(QtGui.QColor(QtCore.Qt.blue))
+
         #remimber repository for saving
         if QtCore.QSettings().value("profiletool/lastdirectory") != '':
-            self.loaddirectory = QtCore.QSettings().value("profiletool/lastdirectory")       
+            self.loaddirectory = QtCore.QSettings().value("profiletool/lastdirectory")
         else:
             self.loaddirectory = ''
-        
-        
+
+
         #mouse tracking
         self.doTracking = False
-        #the dockwidget
-        self.dockwidget = PTDockWidget(self.iface,self)     
-        #dockwidget graph zone
-        self.dockwidget.changePlotLibrary( self.dockwidget.cboLibrary.currentIndex() )
         #the datas / results
         self.profiles = None        #dictionary where is saved the plotting data {"l":[l],"z":[z], "layer":layer1, "curve":curve1}
         #The line information
-        self.pointstoDraw = None
+        self.pointstoDraw = []
         #he renderer for temporary polyline
         #self.toolrenderer = ProfiletoolMapToolRenderer(self)
         self.toolrenderer = None
         #the maptool previously loaded
         self.saveTool = None                #Save the standard mapttool for restoring it at the end
-        
-        
-        
+        # Used to remove highlighting from previously active layer.
+        self.previousLayerId = None
+        self.x_cursor = None    # Keep track of last x position of cursor
+        #the dockwidget
+        self.dockwidget = PTDockWidget(self.iface,self)
+        # Initialize the dockwidget combo box with the list of available profiles.
+        # (Use sorted list to be sure that Height is always on top and
+        # the combobox order is consistent)
+        for profile in sorted(profilers.PLOT_PROFILERS):
+            self.dockwidget.plotComboBox.addItem(profile)
+        self.dockwidget.plotComboBox.setCurrentIndex(0)
+        self.dockwidget.plotComboBox.currentIndexChanged.connect(
+            lambda index: self.plotProfil())
+        #dockwidget graph zone
+        self.dockwidget.changePlotLibrary( self.dockwidget.cboLibrary.currentIndex() )
+
+
     def activateProfileMapTool(self):
         self.saveTool = self.iface.mapCanvas().mapTool()            #Save the standard mapttool for restoring it at the end
         #Listeners of mouse
         self.toolrenderer = ProfiletoolMapToolRenderer(self)
         self.toolrenderer.connectTool()
+        self.toolrenderer.setSelectionMethod(
+                self.dockwidget.comboBox.currentIndex())
         #init the mouse listener comportement and save the classic to restore it on quit
         self.iface.mapCanvas().setMapTool(self.toolrenderer.tool)
-        self.dockwidget.selectionMethod(self.dockwidget.comboBox.currentIndex())
+
 
 
     #******************************************************************************************
     #**************************** function part *************************************************
     #******************************************************************************************
 
+    def clearProfil(self):
+        self.updateProfilFromFeatures(None, [])
 
-    #def calculateProfil(self, points1, model1, library, vertline = True):
-    def calculateProfil(self, points1,  vertline = True):
-        self.disableMouseCoordonates()
-        self.rubberbandbuf.reset()
+    def updateProfilFromFeatures(self, layer, features, plotProfil=True):
+        """Updates self.profiles from given feature list.
+
+        This function extracts the list of coordinates from the given
+        feature set and calls updateProfil.
+        This function also manages selection/deselection of features in the
+        active layer to highlight the feature being profiled.
+        """
+        pointstoDraw = []
+
+        # Remove selection from previous layer if it still exists
+        previousLayer = QgsProject.instance().mapLayer(
+                            self.previousLayerId)
+        if previousLayer:
+            previousLayer.removeSelection()
+
+        if layer:
+            self.previousLayerId = layer.id()
+        else:
+            self.previousLayerId = None
+
+        if layer:
+            layer.removeSelection()
+            layer.select([f.id() for f in features])
+            first_segment = True
+            for feature in features:
+                if first_segment:
+                    k = 0
+                    first_segment = False
+                else:
+                    k = 1
+                while not feature.geometry().vertexAt(k) == QgsPoint(0,0):
+                    point2 = self.toolrenderer.tool.toMapCoordinates(
+                            layer, 
+                            QgsPointXY(feature.geometry().vertexAt(k)))
+                    pointstoDraw += [[point2.x(),point2.y()]]
+                    k += 1
+        self.updateProfil(pointstoDraw, False, plotProfil)
+
+    def updateProfil(self, points1, removeSelection=True, plotProfil=True):
+        """Updates self.profiles from values in points1.
+
+        This function can be called from updateProfilFromFeatures or from
+        ProfiletoolMapToolRenderer (with a list of points from rubberband).
+        """
+        if removeSelection:
+            # Be sure that we unselect anything in the previous layer.
+            previousLayer = QgsProject.instance().mapLayer(
+                                self.previousLayerId)
+            if previousLayer:
+                previousLayer.removeSelection()
+        # replicate last point (bug #6680)
+        # if points1:
+        #    points1 = points1 + [points1[-1]]
         self.pointstoDraw = points1
-        
-        #self.prepar_points(self.pointstoDraw)   #for mouse tracking
-        self.removeClosedLayers(self.dockwidget.mdl)
-        if self.pointstoDraw == None:
-            return
-        
-        PlottingTool().clearData(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)
-        
         self.profiles = []
-        
-        if vertline:                        #Plotting vertical lines at the node of polyline draw
-            PlottingTool().drawVertLine(self.dockwidget, self.pointstoDraw, self.dockwidget.plotlibrary)
 
         #calculate profiles
         for i in range(0 , self.dockwidget.mdl.rowCount()):
@@ -132,31 +171,79 @@ class ProfileToolCore(QWidget):
             self.profiles[i]["band"] = self.dockwidget.mdl.item(i,3).data(QtCore.Qt.EditRole)
             #if self.dockwidget.mdl.item(i,5).data(Qt.EditRole).type() == self.dockwidget.mdl.item(i,5).data(Qt.EditRole).VectorLayer :
             if self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer :
-                self.profiles[i], buffer, multipoly = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
-                self.rubberbandbuf.addGeometry(buffer,None)
-                self.rubberbandbuf.addGeometry(multipoly,None)
-                
+                self.profiles[i], _, _ = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
             else:
-                self.profiles[i] = DataReaderTool().dataRasterReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, self.dockwidget.checkBox.isChecked())
-            
-            
-            
+                if self.dockwidget.profileInterpolationCheckBox.isChecked():
+                    if self.dockwidget.fullResolutionCheckBox.isChecked():
+                        resolution_mode = "full"
+                    else:
+                        resolution_mode = "limited"
+                else:
+                    resolution_mode = "samples"
+
+                self.profiles[i] = DataReaderTool().dataRasterReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, resolution_mode)
+            # Plotting coordinate values are initialized on plotProfil
+            self.profiles[i]["plot_x"] = []
+            self.profiles[i]["plot_y"] = []
+
+        if plotProfil:
+            self.plotProfil()
+
+    def plotProfil(self, vertline = True):
+        self.disableMouseCoordonates()
+
+        self.removeClosedLayers(self.dockwidget.mdl)
+        PlottingTool().clearData(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)
+
+        # if not self.pointstoDraw:
+        #    self.updateCursorOnMap(self.x_cursor)
+        #    return
+
+        if vertline:                        #Plotting vertical lines at the node of polyline draw
+            PlottingTool().drawVertLine(self.dockwidget, self.pointstoDraw, self.dockwidget.plotlibrary)
+
+        #calculate buffer geometries if search buffer is set in mdt layer
+        geoms = []
+        for i in range(0 , self.dockwidget.mdl.rowCount()):
+            #if self.dockwidget.mdl.item(i,5).data(Qt.EditRole).type() == self.dockwidget.mdl.item(i,5).data(Qt.EditRole).VectorLayer :
+            if self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer :
+                _, buffer, multipoly = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
+                geoms.append(buffer)
+                geoms.append(multipoly)
+        self.toolrenderer.setBufferGeometry(geoms)
+
+        # Update coordinates to use in plot (height, slope %...)
+        profile_func = profilers.PLOT_PROFILERS[
+                            self.dockwidget.plotComboBox.currentText()]
+
+        for profile in self.profiles:
+            profile["plot_x"], profile["plot_y"] = profile_func(profile)
+
         #plot profiles
         PlottingTool().attachCurves(self.dockwidget, self.profiles, self.dockwidget.mdl, self.dockwidget.plotlibrary)
         PlottingTool().reScalePlot(self.dockwidget, self.profiles, self.dockwidget.plotlibrary)
         #create tab with profile xy
         self.dockwidget.updateCoordinateTab()
         #Mouse tracking
-        
-        
-        if self.doTracking :
-            self.rubberbandpoint.show()
-        self.enableMouseCoordonates(self.dockwidget.plotlibrary)
-        
-                
 
-    
-    
+
+        self.updateCursorOnMap(self.x_cursor)
+        self.enableMouseCoordonates(self.dockwidget.plotlibrary)
+
+    def updateCursorOnMap(self, x):
+        self.x_cursor = x
+        if self.pointstoDraw and self.doTracking:
+            self.toolrenderer.rubberbandpoint.show()
+            if x is not None:
+                points = [QgsPoint(*p) for p in self.pointstoDraw]
+                geom =  qgis.core.QgsGeometry.fromPolyline(points)
+                pointprojected = geom.interpolate(x)
+                if pointprojected:
+                    self.toolrenderer.rubberbandpoint.setCenter(
+                        pointprojected.asPoint())
+        else:
+            self.toolrenderer.rubberbandpoint.hide()
+
     # remove layers which were removed from QGIS
     def removeClosedLayers(self, model1):
         qgisLayerNames = []
@@ -167,8 +254,8 @@ class ProfileToolCore(QWidget):
                     qgisLayerNames.append(self.iface.mapCanvas().layer(i).name())
             """
         elif int(QtCore.QT_VERSION_STR[0]) == 5 :    #qgis3
-            qgisLayerNames = [  layer.name()    for layer in qgis.core.QgsProject().instance().mapLayers().values()]
-            
+            qgisLayerNames = [  layer.name()    for layer in qgis.core.QgsProject.instance().mapLayers().values()]
+
         #print('qgisLayerNames',qgisLayerNames)
         for i in range(0 , model1.rowCount()):
             layerName = model1.item(i,2).data(QtCore.Qt.EditRole)
@@ -176,30 +263,26 @@ class ProfileToolCore(QWidget):
                 self.dockwidget.removeLayer(i)
                 self.removeClosedLayers(model1)
                 break
-    
 
-    def getProfileCurve(self,nr):
-        try:
-            return self.profiles[nr]["curve"]
-        except:
-            return None
-            
-    
+    def cleaning(self):
+        self.clearProfil()
+        if self.toolrenderer:
+            self.toolrenderer.cleaning()
+
+
     #******************************************************************************************
     #**************************** mouse interaction *******************************************
     #******************************************************************************************
-            
+
     def activateMouseTracking(self,int1):
 
         if self.dockwidget.TYPE == 'PyQtGraph':
-            
+
             if int1 == 2 :
                 self.doTracking = True
-                self.rubberbandpoint.show()
             elif int1 == 0 :
                 self.doTracking = False
-                self.rubberbandpoint.hide()
-    
+
         elif self.dockwidget.TYPE == 'Matplotlib':
             if int1 == 2 :
                 self.doTracking = True
@@ -210,15 +293,14 @@ class ProfileToolCore(QWidget):
                     self.dockwidget.plotWdg.mpl_disconnect(self.cid)
                 except:
                     pass
-                self.rubberbandpoint.hide()
                 try:
                     if self.vline:
                         self.dockwidget.plotWdg.figure.get_axes()[0].lines.remove(self.vline)
                         self.dockwidget.plotWdg.draw()
                 except Exception as e:
                     print(str(e) )
-                    
-                    
+
+
 
     def mouseevent_mpl(self,event):
         """
@@ -239,67 +321,66 @@ class ProfileToolCore(QWidget):
                 i=i+1
             i=i-1
             x = self.tabmouseevent[i][1] +(self.tabmouseevent[i+1][1] - self.tabmouseevent[i][1] )/ ( self.tabmouseevent[i+1][0] - self.tabmouseevent[i][0]  )  *   (xdata - self.tabmouseevent[i][0])
-            y = self.tabmouseevent[i][2] +(self.tabmouseevent[i+1][2] - self.tabmouseevent[i][2] )/ ( self.tabmouseevent[i+1][0] - self.tabmouseevent[i][0]  )  *   (xdata - self.tabmouseevent[i][0])  
-            self.rubberbandpoint.show() 
+            y = self.tabmouseevent[i][2] +(self.tabmouseevent[i+1][2] - self.tabmouseevent[i][2] )/ ( self.tabmouseevent[i+1][0] - self.tabmouseevent[i][0]  )  *   (xdata - self.tabmouseevent[i][0])
+            self.toolrenderer.rubberbandpoint.show()
             point = QgsPoint( x,y )
-            self.rubberbandpoint.setCenter(point)
+            self.toolrenderer.rubberbandpoint.setCenter(point)
             """
-            if not self.pointstoDraw is None:
-                geom =  qgis.core.QgsGeometry.fromPolyline([QgsPoint(point[0], point[1]) for point in self.pointstoDraw])
-                pointprojected = geom.interpolate(xdata)
-                self.rubberbandpoint.show() 
-                self.rubberbandpoint.setCenter(pointprojected.asPoint())
-            
-            
-            
+            self.updateCursorOnMap(xdata)
+
+
     def enableMouseCoordonates(self,library):
         if library == "PyQtGraph":
             self.dockwidget.plotWdg.scene().sigMouseMoved.connect(self.mouseMovedPyQtGraph)
             self.dockwidget.plotWdg.getViewBox().autoRange( items=self.dockwidget.plotWdg.getPlotItem().listDataItems())
             #self.dockwidget.plotWdg.getViewBox().sigRangeChanged.connect(self.dockwidget.plotRangechanged)
             self.dockwidget.connectPlotRangechanged()
-            
-            
-            
+
+
+
     def disableMouseCoordonates(self):
         try:
             self.dockwidget.plotWdg.scene().sigMouseMoved.disconnect(self.mouseMovedPyQtGraph)
         except:
             pass
-            
+
         self.dockwidget.disconnectPlotRangechanged()
-        
-    
-        
+
+
+
     def mouseMovedPyQtGraph(self, pos): # si connexion directe du signal "mouseMoved" : la fonction reçoit le point courant
             roundvalue = 3
 
             if self.dockwidget.plotWdg.sceneBoundingRect().contains(pos): # si le point est dans la zone courante
-            
+
                 if self.dockwidget.showcursor :
                     range = self.dockwidget.plotWdg.getViewBox().viewRange()
                     mousePoint = self.dockwidget.plotWdg.getViewBox().mapSceneToView(pos) # récupère le point souris à partir ViewBox
-                    
+
                     datas = []
                     pitems = self.dockwidget.plotWdg.getPlotItem()
                     ytoplot = None
                     xtoplot = None
-                    
+
                     if len(pitems.listDataItems())>0:
                         #get data and nearest xy from cursor
                         compt = 0
-                        for  item in pitems.listDataItems():
-                            if item.isVisible() :
-                                x,y = item.getData()
-                                nearestindex = np.argmin( abs(np.array(x)-mousePoint.x()) )
-                                if compt == 0:
-                                    xtoplot = np.array(x)[nearestindex]
-                                    ytoplot = np.array(y)[nearestindex]
-                                else:
-                                    if abs( np.array(y)[nearestindex] - mousePoint.y() ) < abs( ytoplot -  mousePoint.y() ):
-                                        ytoplot = np.array(y)[nearestindex]
+                        try:
+                            for  item in pitems.listDataItems():
+                                if item.isVisible() :
+                                    x,y = item.getData()
+                                    nearestindex = np.argmin( abs(np.array(x)-mousePoint.x()) )
+                                    if compt == 0:
                                         xtoplot = np.array(x)[nearestindex]
-                                compt += 1
+                                        ytoplot = np.array(y)[nearestindex]
+                                    else:
+                                        if abs( np.array(y)[nearestindex] - mousePoint.y() ) < abs( ytoplot -  mousePoint.y() ):
+                                            ytoplot = np.array(y)[nearestindex]
+                                            xtoplot = np.array(x)[nearestindex]
+                                    compt += 1
+                        except ValueError:
+                            ytoplot = None
+                            xtoplot = None
                         #plot xy label and cursor
                         if not xtoplot is None and not ytoplot is None:
                             for item in self.dockwidget.plotWdg.allChildItems():
@@ -319,28 +400,5 @@ class ProfileToolCore(QWidget):
                                         item.show()
                                         item.setText('Y : '+str(round(ytoplot,roundvalue)))
                                         item.setPos(range[0][0],ytoplot )
-                                    
-
-                                    
-                                    
                     #tracking part
-                    if self.doTracking and not xtoplot is None and not ytoplot is None:
-                        geom =  qgis.core.QgsGeometry.fromPolyline([QgsPoint(point[0], point[1]) for point in self.pointstoDraw])
-                        pointprojected = geom.interpolate(xtoplot)
-                        self.rubberbandpoint.show() 
-                        self.rubberbandpoint.setCenter(pointprojected.asPoint())
-
-
-            
-    def prepar_points(self,points1):
-        self.tabmouseevent=[]
-        len = 0
-        for i,point in enumerate(points1):
-            if i==0:
-                self.tabmouseevent.append([0,point[0],point[1]])
-            else:
-                len = len + ( (points1[i][0] - points1[i-1][0] )**2 + (points1[i][1] - points1[i-1][1])**2 )**(0.5)
-                if len ==0:
-                    continue
-                self.tabmouseevent.append([float(len) ,float(point[0]),float(point[1])])
-        self.tabmouseevent = self.tabmouseevent[:-1]
+                    self.updateCursorOnMap(xtoplot)
