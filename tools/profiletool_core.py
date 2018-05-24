@@ -233,14 +233,25 @@ class ProfileToolCore(QWidget):
     def updateCursorOnMap(self, x):
         self.x_cursor = x
         if self.pointstoDraw and self.doTracking:
-            self.toolrenderer.rubberbandpoint.show()
             if x is not None:
-                points = [QgsPoint(*p) for p in self.pointstoDraw]
-                geom =  qgis.core.QgsGeometry.fromPolyline(points)
-                pointprojected = geom.interpolate(x)
+                points = [QgsPointXY(*p) for p in self.pointstoDraw]
+                geom =  qgis.core.QgsGeometry.fromPolylineXY(points)
+                try:
+                    if len(points) > 1:
+                        # May crash with a single point in polyline on 
+                        # QGis 3.0.2, 
+                        # Issue #1 on PANOimagen's repo,
+                        # Bug report #18987 on qgis.                    
+                        pointprojected = geom.interpolate(x).asPoint()
+                    else:
+                        pointprojected = points[0]
+                except (IndexError, AttributeError):
+                    pointprojected = None
+                
                 if pointprojected:
                     self.toolrenderer.rubberbandpoint.setCenter(
-                        pointprojected.asPoint())
+                        pointprojected)
+            self.toolrenderer.rubberbandpoint.show()
         else:
             self.toolrenderer.rubberbandpoint.hide()
 
