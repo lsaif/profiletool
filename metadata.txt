@@ -10,6 +10,7 @@ author=Borys Jurgiel - Patrice Verchere - Etienne Tourigny - Javier Becerra
 email=javier@panoimagen.com
 
 changelog=
+    4.1.1 : Fix #1 - Crash on QGis 3.0.2. 
     4.1.0 : Add support for QGIS 3. Add slope profile and polyline selection.
     -----------------------------------------------------------------
     4.0.3 : fix compatibility range (don't pretend it's QGIS 3 compatible)
