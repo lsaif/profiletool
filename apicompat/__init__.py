@@ -16,3 +16,4 @@ if not initialized and hasattr(qgis.utils, 'QGis'):
     import qgspointxy
     import qgsmaplayer
     import qgsgeometry
+    import qgiscoreqgis

@@ -208,8 +208,13 @@ class DataReaderTool:
 
         sourceCrs = QgsCoordinateReferenceSystem( qgis.utils.iface.mapCanvas().mapSettings().destinationCrs() )
         destCrs = QgsCoordinateReferenceSystem(profile1["layer"].crs())
-        xform = QgsCoordinateTransform(sourceCrs, destCrs)
-        xformrev = QgsCoordinateTransform(destCrs, sourceCrs)
+        if qgis.core.Qgis.QGIS_VERSION[0] > '2':
+            # In QGIS 3 QgsCoordinateTransform needs a QgsCoordinateTransformContext
+            xform = QgsCoordinateTransform(sourceCrs, destCrs, QgsProject.instance())
+            xformrev = QgsCoordinateTransform(destCrs, sourceCrs, QgsProject.instance())
+        else:
+            xform = QgsCoordinateTransform(sourceCrs, destCrs)
+            xformrev = QgsCoordinateTransform(destCrs, sourceCrs)
 
         geom =  qgis.core.QgsGeometry.fromPolyline([QgsPointXY(point[0], point[1]) for point in pointstoDraw1])
 
