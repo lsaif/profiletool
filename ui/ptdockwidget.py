@@ -520,7 +520,7 @@ class PTDockWidget(QDockWidget, FormClass):
 
             fet = QgsFeature(vl.fields())
             #set geometry
-            fet.setGeometry(QgsGeometry.fromPoint(QgsPoint(self.profiletoolcore.profiles[nr]['x'][i],self.profiletoolcore.profiles[nr]['y'][i])))
+            fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(self.profiletoolcore.profiles[nr]['x'][i],self.profiletoolcore.profiles[nr]['y'][i])))
             #set attributes
             fet.setAttributes( [self.profiletoolcore.profiles[nr]["z"][i]] )
             pr.addFeatures([fet])
