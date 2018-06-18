@@ -216,7 +216,7 @@ class DataReaderTool:
             xform = QgsCoordinateTransform(sourceCrs, destCrs)
             xformrev = QgsCoordinateTransform(destCrs, sourceCrs)
 
-        geom =  qgis.core.QgsGeometry.fromPolyline([QgsPointXY(point[0], point[1]) for point in pointstoDraw1])
+        geom =  qgis.core.QgsGeometry.fromPolylineXY([QgsPointXY(point[0], point[1]) for point in pointstoDraw1])
 
         geominlayercrs = qgis.core.QgsGeometry(geom)
         tempresult = geominlayercrs.transform(xform)
