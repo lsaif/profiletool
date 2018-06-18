@@ -344,7 +344,7 @@ class DataReaderTool:
                 break
             else:
                 vertexpoint = geom.vertexAt(i)
-                lenpoly = geom.lineLocatePoint(qgis.core.QgsGeometry.fromPoint(vertexpoint))
+                lenpoly = geom.lineLocatePoint(qgis.core.QgsGeometry.fromPointXY(vertexpoint))
 
                 if min(abs(projectedpoints[:,0] - lenpoly)) < PRECISION :
                     continue
