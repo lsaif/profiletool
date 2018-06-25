@@ -110,5 +110,5 @@ class ProfilePlugin:
         #print('maptoolchanged',newtool,oldtool)
 
     def about(self):
-        from ui.dlgabout import DlgAbout
+        from .ui.dlgabout import DlgAbout
         DlgAbout(self.iface.mainWindow()).exec_()

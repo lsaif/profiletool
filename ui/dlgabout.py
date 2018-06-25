@@ -23,9 +23,10 @@
 #
 #---------------------------------------------------------------------
 
-from PyQt4 import uic
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from qgis.PyQt import uic
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
+from qgis.PyQt.QtWidgets import QDialog
 
 import platform
 import os
