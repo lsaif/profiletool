@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 from ..Qt import QtCore, QtGui, USE_PYSIDE, USE_PYQT5
 from .Node import *
 from ..pgcollections import OrderedDict
