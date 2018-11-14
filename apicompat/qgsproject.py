@@ -50,9 +50,12 @@ qgis.core.QgsProject.write = write
 
 original_QgsProject_read = qgis.core.QgsProject.read
 
-def read(self, filename=None):
-    if filename:
-        return original_QgsProject_read(self, QFileInfo(filename))
+def read(self, param=None):   
+    if param:
+        try:
+            return original_QgsProject_read(self, QFileInfo(param))
+        except TypeError:
+            return original_QgsProject_read(self, param)
     else:
         return original_QgsProject_read(self)
 
