@@ -558,6 +558,8 @@ class PlottingTool:
             for profile in profiles:
                 name = profile['layer'].name()
                 drawing.add_layer(name)
-                points = [(profile['x'][i], profile['y'][i],profile['z'][i]) for i in range(len(profile['l']))]
+                points = [(x, y, z) for x, y, z
+                          in zip(profile['x'], profile['y'], profile['z'])
+                          if z is not None]
                 drawing.add(dxf.polyline(points, color=7, layer=name))
             drawing.save()
