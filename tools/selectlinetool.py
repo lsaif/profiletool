@@ -43,7 +43,7 @@ class SelectLineTool:
         closestFeatures = []
         layer = iface.activeLayer()
         if layer is None or not self.checkIsLineLayer(layer):
-            QMessageBox.warning( iface.mainWindow(), "Closest Feature Finder", "No vector layers selected" )
+            QMessageBox.warning( iface.mainWindow(), "Closest Feature Finder", "No line layer selected" )
             return None, closestFeatures
 
         if self.selectionMethod == "feature":
@@ -62,6 +62,13 @@ class SelectLineTool:
         if layer is None or layer.type() != QgsMapLayer.VectorLayer:
             return False
         return layer.geometryType() == qgis.core.QgsWkbTypes.LineGeometry
+
+    @staticmethod
+    def checkIsPointLayer(layer):
+        if layer is None or layer.type() != QgsMapLayer.VectorLayer:
+            return False
+        return layer.geometryType() == qgis.core.QgsWkbTypes.PointGeometry
+
 
     @staticmethod
     def select_closest_feature(iface, layer, point):
@@ -89,7 +96,7 @@ class SelectLineTool:
                 closestFeature = None
 
         booltemp = layer.geometryType() != qgis.core.QgsWkbTypes.PointGeometry
-        
+
         if booltemp and closestFeature != None:
             # find the furthest bounding box borders
             try:    #qgis2
@@ -162,4 +169,3 @@ class SelectLineTool:
             return [f for f in layer.getFeatures()]
         else:
             return []
-

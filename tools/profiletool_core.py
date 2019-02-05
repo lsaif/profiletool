@@ -46,6 +46,7 @@ from .plottingtool import PlottingTool
 from .ptmaptool import ProfiletoolMapTool, ProfiletoolMapToolRenderer
 from ..ui.ptdockwidget import PTDockWidget
 from . import profilers
+from .selectlinetool import SelectLineTool
 
 class ProfileToolCore(QWidget):
 
@@ -130,18 +131,22 @@ class ProfileToolCore(QWidget):
             self.previousLayerId = None
 
         if layer:
+            is_point_layer = SelectLineTool.checkIsPointLayer(layer)
             layer.removeSelection()
             layer.select([f.id() for f in features])
             first_segment = True
             for feature in features:
-                if first_segment:
+                if first_segment or is_point_layer:
+                    # Point layers have one vertex at 0 for each feature,
+                    # Line layers vertex at 0 after first segment is
+                    # the same as last vertex from previous segment.
                     k = 0
                     first_segment = False
                 else:
                     k = 1
                 while not feature.geometry().vertexAt(k) == QgsPoint(0,0):
                     point2 = self.toolrenderer.tool.toMapCoordinates(
-                            layer, 
+                            layer,
                             QgsPointXY(feature.geometry().vertexAt(k)))
                     pointstoDraw += [[point2.x(),point2.y()]]
                     k += 1
@@ -238,10 +243,10 @@ class ProfileToolCore(QWidget):
                 geom =  qgis.core.QgsGeometry.fromPolylineXY(points)
                 try:
                     if len(points) > 1:
-                        # May crash with a single point in polyline on 
-                        # QGis 3.0.2, 
+                        # May crash with a single point in polyline on
+                        # QGis 3.0.2,
                         # Issue #1 on PANOimagen's repo,
-                        # Bug report #18987 on qgis.                    
+                        # Bug report #18987 on qgis.
                         pointprojected = geom.interpolate(x).asPoint()
                     else:
                         pointprojected = points[0]

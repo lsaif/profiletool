@@ -244,8 +244,16 @@ class DataReaderTool:
                 else:
                     interptemp = None
 
-
-                projectedpoints.append([distline,pointprojected.asPoint().x(), pointprojected.asPoint().y(),distpoint,0 ,interptemp, featPnt.geometry().asPoint().x(),featPnt.geometry().asPoint().y(),featPnt ])
+                try:
+                    projectedpoints.append([distline,
+                                            pointprojected.asPoint().x(),
+                                            pointprojected.asPoint().y(),
+                                            distpoint, 0, interptemp,
+                                            featPnt.geometry().asPoint().x(),
+                                            featPnt.geometry().asPoint().y(),
+                                            featPnt])
+                except ValueError:
+                    print
 
         projectedpoints = np.array(projectedpoints)
 
@@ -269,8 +277,12 @@ class DataReaderTool:
         profile['x'] = [projectedpoint[1] for projectedpoint in projectedpoints]
         profile['y'] = [projectedpoint[2] for projectedpoint in projectedpoints]
 
-        multipoly = qgis.core.QgsGeometry.fromMultiPolyline([[xform.transform(QgsPointXY(projectedpoint[1], projectedpoint[2]), qgis.core.QgsCoordinateTransform.ReverseTransform) ,
-                                                              xform.transform(QgsPointXY(projectedpoint[6], projectedpoint[7]), qgis.core.QgsCoordinateTransform.ReverseTransform)  ] for projectedpoint in projectedpoints])
+        multipoly = qgis.core.QgsGeometry.fromMultiPolylineXY(
+            [[xform.transform(QgsPointXY(projectedpoint[1], projectedpoint[2]),
+                qgis.core.QgsCoordinateTransform.ReverseTransform) ,
+              xform.transform(QgsPointXY(projectedpoint[6], projectedpoint[7]),
+                qgis.core.QgsCoordinateTransform.ReverseTransform)]
+             for projectedpoint in projectedpoints])
 
         return profile, buffergeom, multipoly
 
@@ -343,13 +355,16 @@ class DataReaderTool:
             elif i == len(polyline) -1 :
                 break
             else:
-                vertexpoint = geom.vertexAt(i)
-                lenpoly = geom.lineLocatePoint(qgis.core.QgsGeometry.fromPointXY(vertexpoint))
+                vertexpoint_xy = QgsPointXY(geom.vertexAt(i))
+                # vertexpoint_xy = QgsPointXY(vertexpoint.x(), vertexpoint.y())
+                lenpoly = geom.lineLocatePoint(
+                    qgis.core.QgsGeometry.fromPointXY(vertexpoint_xy))
 
                 if min(abs(projectedpoints[:,0] - lenpoly)) < PRECISION :
                     continue
                 else:
-                    temp1 = self.interpolatePoint(vertexpoint,geom,projectedpoints)
+                    temp1 = self.interpolatePoint(
+                        vertexpoint_xy, geom, projectedpoints)
                     if temp1 != None :
                         projectedpointsinterp.append( temp1 )
 
@@ -362,9 +377,9 @@ class DataReaderTool:
         return projectedpoints
 
 
-    def interpolatePoint(self,vertexpoint,geom,projectedpoints):
+    def interpolatePoint(self, vertexpoint, geom, projectedpoints):
 
-        lenpoly = geom.lineLocatePoint(qgis.core.QgsGeometry.fromPoint(vertexpoint))
+        lenpoly = geom.lineLocatePoint(qgis.core.QgsGeometry.fromPointXY(vertexpoint))
 
         previouspointindex = np.max(np.where(projectedpoints[:,0]<=lenpoly)[0])
         nextpointindex = np.min(np.where(projectedpoints[:,0]>=lenpoly)[0])

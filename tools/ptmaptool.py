@@ -147,7 +147,7 @@ class ProfiletoolMapToolRenderer():
 
     def currentLayerChanged(self, layer):
         if self.selectionmethod == 2:
-            if SelectLineTool.checkIsLineLayer(layer):
+            if SelectLineTool.checkIsLineLayer(layer) or SelectLineTool.checkIsPointLayer(layer):
                 self.profiletool.updateProfilFromFeatures(layer,
                  SelectLineTool.select_layer_features(None, layer, None))
             else:
