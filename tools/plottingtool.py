@@ -66,7 +66,15 @@ try:
 except:
     pass
 
-
+def getSaveFileName(parent, caption, directory, filter):
+    """Qt4/Qt5 compatible getSaveFileName"""
+    fileName = QFileDialog.getSaveFileName(parent = parent,
+                                           caption = caption,
+                                           directory = directory,
+                                           filter = filter)
+    if isinstance(fileName, tuple):  #pyqt5 case
+        fileName = fileName[0]
+    return fileName
 
 class PlottingTool:
     """This class manages profile plotting.
@@ -435,12 +443,16 @@ class PlottingTool:
         axe1.tick_params(axis = "both", which = "minor", direction= "out", length=5, width=1, bottom = True, top = False, left = True, right = False)
 
 
-    def outPrint(self, iface, wdg, mdl, library): # Postscript file rendering doesn't work properly yet.
+    def outPrint(self, iface, wdg, mdl, library):
+        # Postscript file rendering doesn't work properly yet.
         for i in range (0,mdl.rowCount()):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".ps","PostScript Format (*.ps)")
+        fileName = getSaveFileName(iface.mainWindow(),
+                                   "Save As",
+                                   "Profile of " + name + ".ps",
+                                   "PostScript Format (*.ps)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QPrinter()
@@ -461,7 +473,10 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 break
-        fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As","Profile of " + name + ".pdf","Portable Document Format (*.pdf)")
+        fileName = getSaveFileName(iface.mainWindow(),
+                                   "Save As",
+                                   "Profile of " + name + ".pdf",
+                                   "Portable Document Format (*.pdf)")
         if fileName:
             if library == "Qwt5" and has_qwt:
                 printer = QPrinter()
@@ -480,20 +495,18 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        #fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As",wdg.profiletoolcore.loaddirectory,"Profile of " + name + ".svg","Scalable Vector Graphics (*.svg)")
-        fileName = QFileDialog.getSaveFileName(parent = iface.mainWindow(),
-                                               caption = "Save As",
-                                               directory = wdg.profiletoolcore.loaddirectory,
-                                               #filter = "Profile of " + name + ".png",
-                                               filter = "Scalable Vector Graphics (*.svg)")
+
+        fileName = getSaveFileName(parent = iface.mainWindow(),
+                                   caption = "Save As",
+                                   directory = wdg.profiletoolcore.loaddirectory,
+                                   filter = "Scalable Vector Graphics (*.svg)")
 
 
         if fileName:
-            if isinstance(fileName,tuple):  #pyqt5 case
-                fileName = fileName[0]
-
             wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
-            qgis.PyQt.QtCore.QSettings().setValue("profiletool/lastdirectory", wdg.profiletoolcore.loaddirectory)
+            qgis.PyQt.QtCore.QSettings().setValue(
+                "profiletool/lastdirectory",
+                wdg.profiletoolcore.loaddirectory)
 
             if library == "PyQtGraph":
                 exporter = exporters.SVGExporter(wdg.plotWdg.getPlotItem().scene())
@@ -513,17 +526,13 @@ class PlottingTool:
             if  mdl.item(i,0).data(Qt.CheckStateRole):
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
-        fileName = QFileDialog.getSaveFileName(parent = iface.mainWindow(),
-                                               caption = "Save As",
-                                               directory = wdg.profiletoolcore.loaddirectory,
-                                               #filter = "Profile of " + name + ".png",
-                                               filter = "Portable Network Graphics (*.png)")
+        fileName = getSaveFileName(parent = iface.mainWindow(),
+                                   caption = "Save As",
+                                   directory = wdg.profiletoolcore.loaddirectory,
+                                   #filter = "Profile of " + name + ".png",
+                                   filter = "Portable Network Graphics (*.png)")
 
         if fileName:
-
-            if isinstance(fileName,tuple):  #pyqt5 case
-                fileName = fileName[0]
-
             wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
             qgis.PyQt.QtCore.QSettings().setValue("profiletool/lastdirectory", wdg.profiletoolcore.loaddirectory)
 
@@ -542,17 +551,16 @@ class PlottingTool:
                 name = str(mdl.item(i,2).data(Qt.EditRole))
                 #return
         #fileName = QFileDialog.getSaveFileName(iface.mainWindow(), "Save As",wdg.profiletoolcore.loaddirectory,"Profile of " + name + ".dxf","dxf (*.dxf)")
-        fileName = QFileDialog.getSaveFileName(parent = iface.mainWindow(),
-                                               caption = "Save As",
-                                               directory = wdg.profiletoolcore.loaddirectory,
-                                               #filter = "Profile of " + name + ".png",
-                                               filter = "dxf (*.dxf)")
+        fileName = getSaveFileName(parent = iface.mainWindow(),
+                                   caption = "Save As",
+                                   directory = wdg.profiletoolcore.loaddirectory,
+                                   #filter = "Profile of " + name + ".png",
+                                   filter = "dxf (*.dxf)")
         if fileName:
-            if isinstance(fileName,tuple):  #pyqt5 case
-                fileName = fileName[0]
-
             wdg.profiletoolcore.loaddirectory = os.path.dirname(fileName)
-            qgis.PyQt.QtCore.QSettings().setValue("profiletool/lastdirectory", wdg.profiletoolcore.loaddirectory)
+            qgis.PyQt.QtCore.QSettings().setValue(
+                "profiletool/lastdirectory",
+                 wdg.profiletoolcore.loaddirectory)
 
             drawing = dxf.drawing(fileName)
             for profile in profiles:
