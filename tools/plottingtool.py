@@ -535,7 +535,7 @@ class PlottingTool:
             elif library == "Matplotlib" and has_mpl:
                 wdg.plotWdg.figure.savefig(str(fileName))
 
-    def outDXF(self, iface, wdg, mdl, library, profiles):
+    def outDXF(self, iface, wdg, mdl, library, profiles, type="3D"):
 
         for i in range (0,mdl.rowCount()):
             if  mdl.item(i,0).data(Qt.CheckStateRole):
@@ -558,8 +558,13 @@ class PlottingTool:
             for profile in profiles:
                 name = profile['layer'].name()
                 drawing.add_layer(name)
-                points = [(x, y, z) for x, y, z
-                          in zip(profile['x'], profile['y'], profile['z'])
-                          if z is not None]
+                if type == '2D':
+                    points = [(l, z, 0) for l, z
+                              in zip(profile['l'], profile['z'])
+                              if z is not None]
+                else:
+                    points = [(x, y, z) for x, y, z
+                              in zip(profile['x'], profile['y'], profile['z'])
+                              if z is not None]
                 drawing.add(dxf.polyline(points, color=7, layer=name))
             drawing.save()

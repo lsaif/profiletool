@@ -182,7 +182,10 @@ class PTDockWidget(QDockWidget, FormClass):
             layout.addWidget(self.plotWdg)
             self.TYPE = "PyQtGraph"
             self.cbxSaveAs.clear()
-            self.cbxSaveAs.addItems(['Graph - PNG','Graph - SVG','3D line - DXF'])
+            self.cbxSaveAs.addItems(['Graph - PNG',
+                                     'Graph - SVG',
+                                     '3D line - DXF',
+                                     '2D Profile - DXF'])
 
         elif library == "Qwt5":
             self.stackedWidget.setCurrentIndex(0)
@@ -226,7 +229,12 @@ class PTDockWidget(QDockWidget, FormClass):
                 pass
             self.TYPE = "Matplotlib"
             self.cbxSaveAs.clear()
-            self.cbxSaveAs.addItems(['Graph - PDF','Graph - PNG','Graph - SVG','Graph - print (PS)','3D line - DXF'])
+            self.cbxSaveAs.addItems(['Graph - PDF',
+                                     'Graph - PNG',
+                                     'Graph - SVG',
+                                     'Graph - print (PS)',
+                                     '3D line - DXF',
+                                     '2D Profile - DXF'])
 
     #********************************************************************************
     #graph things ****************************************************************
@@ -562,9 +570,11 @@ class PTDockWidget(QDockWidget, FormClass):
         elif idx == 'Graph - print (PS)':
                 self.outPrint()
         elif idx == '3D line - DXF':
-                self.outDXF()
+                self.outDXF('3D')
+        elif idx == '2D Profile - DXF':
+                self.outDXF('2D')
         else:
-            print('plottingtool: invalid index '+str(idx))
+            print('plottingtool: invalid index ' + str(idx))
 
     def outPrint(self): # Postscript file rendering doesn't work properly yet.
         PlottingTool().outPrint(self.iface, self, self.mdl, self.cboLibrary.currentText ())
@@ -578,5 +588,7 @@ class PTDockWidget(QDockWidget, FormClass):
     def outPNG(self):
         PlottingTool().outPNG(self.iface, self, self.mdl, self.cboLibrary.currentText ())
 
-    def outDXF(self):
-        PlottingTool().outDXF(self.iface, self, self.mdl, self.cboLibrary.currentText (), self.profiletoolcore.profiles)
+    def outDXF(self, type):
+        PlottingTool().outDXF(self.iface, self, self.mdl,
+                              self.cboLibrary.currentText(),
+                              self.profiletoolcore.profiles, type)
