@@ -245,7 +245,7 @@ class ProfileToolCore(QWidget):
                         pointprojected = geom.interpolate(x).asPoint()
                     else:
                         pointprojected = points[0]
-                except (IndexError, AttributeError):
+                except (IndexError, AttributeError, ValueError):
                     pointprojected = None
                 
                 if pointprojected:
