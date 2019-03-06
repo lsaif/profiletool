@@ -41,7 +41,7 @@ class TableViewTool(QtCore.QObject):
     layerAddedOrRemoved = QtCore.pyqtSignal() # Emitted when a new layer is added
 
     def addLayer(self , iface, mdl, layer1 = None):
-        if layer1 == None:
+        if layer1 is None:
             templist=[]
             j=0
             # Ask the layer by a input dialog
@@ -73,12 +73,16 @@ class TableViewTool(QtCore.QObject):
             if isProfilable(layer1):
                 layer2 = layer1
             else:
-                QMessageBox.warning(iface.mainWindow(), "Profile tool", "Active layer is not a profilable layer")
+                text = "Active layer is not a profilable layer."
+                if layer1.type() == layer1.MeshLayer:
+                    text +="\n(MeshLayer support requires QGis version 3.6 or newer.)"
+                QMessageBox.warning(iface.mainWindow(), "Profile tool", text)
                 return
 
         # Ask the Band by a input dialog
         #First, if isProfilable, considerate the real band number (instead of band + 1 for raster)
-        if layer2.type() == layer2.PluginLayer and  isProfilable(layer2):
+        if layer2.type() == layer2.PluginLayer and  isProfilable(layer2) or \
+           layer2.type() == layer2.MeshLayer:
             self.bandoffset = 0
             typename = 'parameter'
         elif layer2.type() == layer2.RasterLayer:
@@ -141,7 +145,9 @@ class TableViewTool(QtCore.QObject):
         mdl.setData(mdl.index(row, 0, QModelIndex())  ,True, QtCore.Qt.CheckStateRole)
         mdl.item(row,0).setFlags(QtCore.Qt.ItemIsSelectable)
         lineColour = QtCore.Qt.red
-        if layer2.type() == layer2.PluginLayer and layer2.LAYER_TYPE == 'crayfish_viewer':
+        #QGis2
+        if layer2.type() == layer2.PluginLayer and layer2.LAYER_TYPE == 'crayfish_viewer' or \
+           layer2.type() == layer2.MeshLayer:    #QGis3
             lineColour = QtCore.Qt.blue
         mdl.setData( mdl.index(row, 1, QModelIndex())  ,QColor(lineColour) , QtCore.Qt.BackgroundRole)
         mdl.item(row,1).setFlags(QtCore.Qt.NoItemFlags)

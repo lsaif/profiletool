@@ -83,6 +83,9 @@ class DataReaderTool:
                 res = min(self.profiles["layer"].rasterUnitsPerPixelX(),self.profiles["layer"].rasterUnitsPerPixelY()) * tlC / max(abs(x2C-x1C), abs(y2C-y1C))    # res depend on the angle of ligne with normal
             except ZeroDivisionError:
                 res = min(self.profiles["layer"].rasterUnitsPerPixelX(),self.profiles["layer"].rasterUnitsPerPixelY()) * 1.2
+            except AttributeError:
+                # MeshLayers have no rasterUnitsPerPixelX/Y attribute
+                res = 1
             #enventually use bigger step, wether full res is selected or not
             if resolution_mode == "samples":
                 """Only take values at sample points, no intermediate values."""
@@ -158,7 +161,21 @@ class DataReaderTool:
                     attr = 0
                 z.append(attr)
                 self._status_update( (100*n) // (len(x) - 1) )
-
+        elif layer.type() == layer.MeshLayer:
+            identifier = qgis.gui.QgsMapToolIdentify(qgis.utils.iface.mapCanvas())
+            for n, coords in enumerate(zip(x, y)):
+                ident = identifier.identify(
+                    QgsGeometry.fromPointXY(QgsPointXY(*coords)),
+                    qgis.gui.QgsMapToolIdentify.DefaultQgsSetting,
+                    [layer], 
+                    qgis.gui.QgsMapToolIdentify.MeshLayer)[0]
+                
+                try:
+                    attr = float(ident.mAttributes['Scalar Value'])
+                except (AttributeError, ValueError):
+                    attr = 0
+                z.append(attr)
+                self._status_update( (100*n) // (len(x) - 1) )
         else: #RASTER LAYERS
             for n, coords in enumerate(zip(x, y)):
                 # this code adapted from valuetool plugin

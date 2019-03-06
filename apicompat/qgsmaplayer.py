@@ -10,3 +10,5 @@ def isSpatial(self):
     return self.hasGeometryType()
 
 qgis.core.QgsMapLayer.isSpatial = isSpatial
+# MeshLayer is defined in QGis 3.x, should not appear in QGis 2.x
+qgis.core.QgsMapLayer.MeshLayer = 3
