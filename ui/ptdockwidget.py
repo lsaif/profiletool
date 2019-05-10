@@ -373,13 +373,12 @@ class PTDockWidget(QDockWidget, FormClass):
 
             self.profiletoolcore.plotProfil()
 
-
-
     #********************************************************************************
     #coordinate tab ****************************************************************
     #********************************************************************************
 
     def updateCoordinateTab(self):
+
         try:                                                                    #Reinitializing the table tab
             self.VLayout = self.scrollAreaWidgetContents.layout()
             while 1:
@@ -403,13 +402,8 @@ class PTDockWidget(QDockWidget, FormClass):
                 self.profiletoolcore.pointstoDraw, False, False)
         for i in range(0 , self.mdl.rowCount()):
             self.groupBox.append( QGroupBox(self.scrollAreaWidgetContents) )
-            sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(self.groupBox[i].sizePolicy().hasHeightForWidth())
+            sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.groupBox[i].setSizePolicy(sizePolicy)
-            self.groupBox[i].setMinimumSize(QSize(0, 150))
-            self.groupBox[i].setMaximumSize(QSize(16777215, 150))
             try:    #qgis2
                 self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), self.profiletoolcore.profiles[i]["layer"].name(), None, QApplication.UnicodeUTF8))
             except: #qgis3
@@ -420,29 +414,34 @@ class PTDockWidget(QDockWidget, FormClass):
             self.verticalLayout[i].setObjectName("verticalLayout")
             #The table
             self.tableView.append( QTableView(self.groupBox[i]) )
+            sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.tableView[i].setSizePolicy(sizePolicy)
             self.tableView[i].setObjectName("tableView" + str(i))
-            font = QFont("Arial", 8)
+            # font = QFont("Arial", 8)
             column = len(self.profiletoolcore.profiles[i]["l"])
-            #self.mdl = QStandardItemModel(2, column)
             self.mdl2 = QStandardItemModel(2, column)
             for j in range(len(self.profiletoolcore.profiles[i]["l"])):
                 self.mdl2.setData(self.mdl2.index(0, j, QModelIndex())  ,self.profiletoolcore.profiles[i]["l"][j])
-                self.mdl2.setData(self.mdl2.index(0, j, QModelIndex())  ,font ,QtCore.Qt.FontRole)
+                # self.mdl2.setData(self.mdl2.index(0, j, QModelIndex())  ,font ,QtCore.Qt.FontRole)
                 self.mdl2.setData(self.mdl2.index(1, j, QModelIndex())  ,self.profiletoolcore.profiles[i]["z"][j])
-                self.mdl2.setData(self.mdl2.index(1, j, QModelIndex())  ,font ,QtCore.Qt.FontRole)
+                # self.mdl2.setData(self.mdl2.index(1, j, QModelIndex())  ,font ,QtCore.Qt.FontRole)
             self.tableView[i].verticalHeader().setDefaultSectionSize(18)
             self.tableView[i].horizontalHeader().setDefaultSectionSize(60)
             self.tableView[i].setModel(self.mdl2)
+            # 2 * header (1 header + 1 horz slider) + nrows + a small margin
+            minTableHeight =  (2 * self.tableView[i].horizontalHeader().height() +
+                               sum(self.tableView[i].rowHeight(j)
+                                   for j in range(self.tableView[i].model().rowCount())) +
+                               6)  # extra safety margin
+            self.tableView[i].setMinimumHeight(minTableHeight)
+
             self.verticalLayout[i].addWidget(self.tableView[i])
 
             self.horizontalLayout = QHBoxLayout()
 
             #the copy to clipboard button
             self.profilePushButton.append( QPushButton(self.groupBox[i]) )
-            sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(self.profilePushButton[i].sizePolicy().hasHeightForWidth())
+            sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
             self.profilePushButton[i].setSizePolicy(sizePolicy)
             try:    #qgis2
                 self.profilePushButton[i].setText(QApplication.translate("GroupBox", "Copy to clipboard", None, QApplication.UnicodeUTF8))
@@ -453,10 +452,7 @@ class PTDockWidget(QDockWidget, FormClass):
 
             #button to copy to clipboard with coordinates
             self.coordsPushButton.append(QPushButton(self.groupBox[i]))
-            sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(self.coordsPushButton[i].sizePolicy().hasHeightForWidth())
+            sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
             self.coordsPushButton[i].setSizePolicy(sizePolicy)
             try:    #qgis2
                 self.coordsPushButton[i].setText(QApplication.translate("GroupBox", "Copy to clipboard (with coordinates)", None, QApplication.UnicodeUTF8))
@@ -465,17 +461,12 @@ class PTDockWidget(QDockWidget, FormClass):
 
             #button to copy to clipboard with coordinates
             self.tolayerPushButton.append(QPushButton(self.groupBox[i]))
-            sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            sizePolicy.setHeightForWidth(self.tolayerPushButton[i].sizePolicy().hasHeightForWidth())
+            sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
             self.tolayerPushButton[i].setSizePolicy(sizePolicy)
             try:    #qgis2
                 self.tolayerPushButton[i].setText(QApplication.translate("GroupBox", "Create Temporary layer", None, QApplication.UnicodeUTF8))
             except: #qgis3
                 self.tolayerPushButton[i].setText(QApplication.translate("GroupBox", "Create Temporary layer", None))
-
-
 
             self.coordsPushButton[i].setObjectName(str(i))
             self.horizontalLayout.addWidget(self.coordsPushButton[i])
