@@ -376,6 +376,13 @@ class PTDockWidget(QDockWidget, FormClass):
     #********************************************************************************
     #coordinate tab ****************************************************************
     #********************************************************************************
+    @staticmethod
+    def _profile_name(profile):
+        groupTitle = profile["layer"].name()
+        band = profile["band"]
+        if band is not None and band > -1:
+            groupTitle += '_band_{}'.format(band)
+        return groupTitle.replace(' ', '_')
 
     def updateCoordinateTab(self):
 
@@ -404,10 +411,12 @@ class PTDockWidget(QDockWidget, FormClass):
             self.groupBox.append( QGroupBox(self.scrollAreaWidgetContents) )
             sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.groupBox[i].setSizePolicy(sizePolicy)
+            profileTitle = self._profile_name(self.profiletoolcore.profiles[i])
+
             try:    #qgis2
-                self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), self.profiletoolcore.profiles[i]["layer"].name(), None, QApplication.UnicodeUTF8))
+                self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), profileTitle, None, QApplication.UnicodeUTF8))
             except: #qgis3
-                self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), self.profiletoolcore.profiles[i]["layer"].name(), None))
+                self.groupBox[i].setTitle(QApplication.translate("GroupBox" + str(i), profileTitle, None))
             self.groupBox[i].setObjectName("groupBox" + str(i))
 
             self.verticalLayout.append( QVBoxLayout(self.groupBox[i]) )
@@ -506,7 +515,7 @@ class PTDockWidget(QDockWidget, FormClass):
     def createTemporaryLayer(self):
         nr = int( self.sender().objectName() )
         type = "Point?crs="+str(self.profiletoolcore.profiles[nr]["layer"].crs().authid())
-        name = 'ProfileTool_'+str(self.profiletoolcore.profiles[nr]['layer'].name())
+        name = 'ProfileTool_{}'.format(self._profile_name(self.profiletoolcore.profiles[nr]))
         vl = QgsVectorLayer(type, name, "memory")
         pr = vl.dataProvider()
         vl.startEditing()
