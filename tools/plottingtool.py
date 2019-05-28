@@ -465,7 +465,7 @@ class PlottingTool:
                 if dialog.exec_():
                     wdg.plotWdg.print_(printer)
             elif library == "Matplotlib" and has_mpl:
-                wdg.plotWdg.figure.savefig(str(fileName))
+                wdg.plotWdg.figure.savefig(str(fileName), bbox_inches="tight")
 
 
     def outPDF(self, iface, wdg, mdl, library):
@@ -486,7 +486,7 @@ class PlottingTool:
                 printer.setOrientation(QPrinter.Landscape)
                 wdg.plotWdg.print_(printer)
             elif library == "Matplotlib" and has_mpl:
-                wdg.plotWdg.figure.savefig(str(fileName))
+                wdg.plotWdg.figure.savefig(str(fileName), bbox_inches="tight")
 
 
 
@@ -519,7 +519,7 @@ class PlottingTool:
                 printer.setSize(QSize(800, 400))
                 wdg.plotWdg.print_(printer)
             elif library == "Matplotlib" and has_mpl:
-                wdg.plotWdg.figure.savefig(str(fileName))
+                wdg.plotWdg.figure.savefig(str(fileName), bbox_inches="tight")
 
     def outPNG(self, iface, wdg, mdl, library):
         for i in range (0,mdl.rowCount()):
@@ -542,7 +542,7 @@ class PlottingTool:
             elif library == "Qwt5" and has_qwt:
                 QPixmap.grabWidget(wdg.plotWdg).save(fileName, "PNG")
             elif library == "Matplotlib" and has_mpl:
-                wdg.plotWdg.figure.savefig(str(fileName))
+                wdg.plotWdg.figure.savefig(str(fileName), bbox_inches="tight")
 
     def outDXF(self, iface, wdg, mdl, library, profiles, type="3D"):
 
