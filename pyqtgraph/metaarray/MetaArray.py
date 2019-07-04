@@ -21,7 +21,7 @@ from ..python2_3 import basestring
 ## This can be overridden by setting USE_HDF5 = False
 USE_HDF5 = True
 try:
-    import h5py
+    import h5py_bug_dont_use_hdf5  # See issue #23 on PANOimagen/profiletool
     HAVE_HDF5 = True
 except:
     USE_HDF5 = False

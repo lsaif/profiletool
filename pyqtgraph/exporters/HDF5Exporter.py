@@ -1,4 +1,4 @@
-from ..Qt import QtGui, QtCore
+"""from ..Qt import QtGui, QtCore
 from .Exporter import Exporter
 from ..parametertree import Parameter
 from .. import PlotItem
@@ -62,3 +62,4 @@ class HDF5Exporter(Exporter):
 
 if HAVE_HDF5:
     HDF5Exporter.register()
+"""
