@@ -144,7 +144,7 @@ class ProfileToolCore(QWidget):
                     first_segment = False
                 else:
                     k = 1
-                while not feature.geometry().vertexAt(k) == QgsPoint(0,0):
+                while not feature.geometry().vertexAt(k) == QgsPoint():
                     point2 = self.toolrenderer.tool.toMapCoordinates(
                             layer,
                             QgsPointXY(feature.geometry().vertexAt(k)))
