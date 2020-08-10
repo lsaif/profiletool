@@ -54,6 +54,7 @@ class ProfileToolCore(QWidget):
         QWidget.__init__(self, parent)
         self.iface = iface
         self.plugincore = plugincore
+        self.QProject = QgsProject.instance()
 
         #remimber repository for saving
         if QtCore.QSettings().value("profiletool/lastdirectory") != '':
@@ -99,6 +100,8 @@ class ProfileToolCore(QWidget):
                 self.dockwidget.comboBox.currentIndex())
         #init the mouse listener comportement and save the classic to restore it on quit
         self.iface.mapCanvas().setMapTool(self.toolrenderer.tool)
+        
+        self.QProject.layersRemoved.connect(lambda: self.removeClosedLayers(self.dockwidget.mdl))
 
 
 
@@ -284,6 +287,10 @@ class ProfileToolCore(QWidget):
         self.clearProfil()
         if self.toolrenderer:
             self.toolrenderer.cleaning()
+            try:
+                self.QProject.layersRemoved.disconnect(lambda: self.removeClosedLayers(self.dockwidget.mdl))
+            except:
+                pass
 
 
     #******************************************************************************************
