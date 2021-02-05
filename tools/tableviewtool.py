@@ -3,6 +3,7 @@
 #
 # Profile
 # Copyright (C) 2012  Patrice Verchere
+# Copyright (C) 2021  Luthfi Saifudin
 #-----------------------------------------------------------
 #
 # licensed under the terms of GNU GPL 2
@@ -158,15 +159,46 @@ class TableViewTool(QtCore.QObject):
 
         if layer2.type() == layer2.VectorLayer :
             #mdl.setData( mdl.index(row, 4, QModelIndex())  ,QVariant(100.0))
-            mdl.setData(mdl.index(row, 4, QModelIndex()), 100.0)
+            mdl.setData(mdl.index(row, 4, QModelIndex()), 3.0)
+            '''listPlotTypes = ['Line','Point']
+            i = mdl.index(row, 5)
+            plotTypes = QComboBox()
+            pix = QPersistentModelIndex(i)
+            plotTypes.currentIndexChanged[str].connect(lambda txt, pix=pix:mdl.setData(QModelIndex(pix), txt))
+            plotTypes.addItems(listPlotTypes)
+            self.tableview.setIndexWidget(i, plotTypes)
+            sizeOptions = QComboBox()
+            listSize = listband.append('')
+            sizeOptions.addItems(listSize)
+            sizeOptions.setCurrentIndex(listSize.index(0))
+            mdl.setData(mdl.index(row, 6, QModelIndex()), sizeOptions)
+            listband = []
+            for i in range(0,layer2.bandCount()):
+                listband.append(str(i+self.bandoffset))
+            colorOptions = QComboBox()
+            listColor = listband.append('')
+            colorOptions.addItems(listSize)
+            colorOptions.setCurrentIndex(listColor.index(0))
+            mdl.setData(mdl.index(row, 6, QModelIndex()), colorOptions)
+            mdl.setData(mdl.index(row, 7, QModelIndex()), colorOptions)'''
             #mdl.item(row,3).setFlags(Qt.NoItemFlags)
+            mdl.setData(mdl.index(row, 5, QModelIndex()), 'Line')
+            mdl.setData(mdl.index(row, 6, QModelIndex()), 'Standard')
+            mdl.setData(mdl.index(row, 7, QModelIndex()), 'Selected')
+            
         else:
             mdl.setData(mdl.index(row, 4, QModelIndex()), '')
             mdl.item(row,4).setFlags(QtCore.Qt.NoItemFlags)
+            mdl.setData(mdl.index(row, 5, QModelIndex()), '')
+            mdl.item(row,5).setFlags(QtCore.Qt.NoItemFlags)
+            mdl.setData(mdl.index(row, 6, QModelIndex()), '')
+            mdl.item(row,6).setFlags(QtCore.Qt.NoItemFlags)
+            mdl.setData(mdl.index(row, 7, QModelIndex()), '')
+            mdl.item(row,7).setFlags(QtCore.Qt.NoItemFlags)
 
 
-        mdl.setData( mdl.index(row, 5, QModelIndex())  ,layer2)
-        mdl.item(row,5).setFlags(QtCore.Qt.NoItemFlags)
+        mdl.setData( mdl.index(row, 8, QModelIndex())  ,layer2)
+        mdl.item(row,8).setFlags(QtCore.Qt.NoItemFlags)
         self.layerAddedOrRemoved.emit()
 
 
@@ -196,11 +228,12 @@ class TableViewTool(QtCore.QObject):
 
     def onClick(self, iface, wdg, mdl, plotlibrary, index1):                    #action when clicking the tableview
         temp = mdl.itemFromIndex(index1)
+        layer = mdl.index(index1.row(),8).data()
         if index1.column() == 1:                #modifying color
             name = ("%s#%d") % (mdl.item(index1.row(),2).data(QtCore.Qt.EditRole), mdl.item(index1.row(),3).data(QtCore.Qt.EditRole))
             color = QColorDialog().getColor(temp.data(QtCore.Qt.BackgroundRole))
             mdl.setData( mdl.index(temp.row(), 1, QModelIndex())  ,color , QtCore.Qt.BackgroundRole)
-            PlottingTool().changeColor(wdg, plotlibrary, color, name)
+            PlottingTool().changeColor(wdg, plotlibrary, mdl, color, name)
         elif index1.column() == 0:                #modifying checkbox
             #name = mdl.item(index1.row(),2).data(Qt.EditRole)
             name = ("%s#%d") % (mdl.item(index1.row(),2).data(QtCore.Qt.EditRole), mdl.item(index1.row(),3).data(QtCore.Qt.EditRole))
@@ -211,9 +244,44 @@ class TableViewTool(QtCore.QObject):
                 booltemp = True
             mdl.setData( mdl.index(temp.row(), 0, QModelIndex())  ,booltemp, QtCore.Qt.CheckStateRole)
             PlottingTool().changeAttachCurve(wdg, plotlibrary, booltemp, name)
-        elif False and index1.column() == 4:
+        elif index1.column() == 5:                
+            name = ("%s#%d") % (mdl.item(index1.row(),2).data(QtCore.Qt.EditRole), mdl.item(index1.row(),3).data(QtCore.Qt.EditRole))
+            linetype = mdl.index(index1.row(),5).data()
+            flags = mdl.item(index1.row(),6).flags()
+            if linetype == 'Line':
+                linetype = 'Point'
+                mdl.item(temp.row(),6).setFlags(mdl.item(temp.row(),6).flags() ^ QtCore.Qt.NoItemFlags)
+                mdl.item(temp.row(),7).setFlags(mdl.item(temp.row(),7).flags() ^ QtCore.Qt.NoItemFlags)
+            else:
+                linetype = 'Line'
+                flags = QtCore.Qt.NoItemFlags
+                mdl.setData(mdl.index(temp.row(), 6, QModelIndex()), 'Standard')
+                mdl.setData(mdl.index(temp.row(), 7, QModelIndex()), 'Selected')
+            mdl.setData(mdl.index(temp.row(), 5, QModelIndex()), linetype)
+            PlottingTool().changeDataPlot(wdg, plotlibrary, mdl, linetype, name)
+        elif index1.column() == 6:  
+            name = ("%s#%d") % (mdl.item(index1.row(),2).data(QtCore.Qt.EditRole), mdl.item(index1.row(),3).data(QtCore.Qt.EditRole))
+            dotSize = mdl.index(index1.row(),6).data()
+            linetype = mdl.index(index1.row(),5).data()
+            if (dotSize == 'Standard') & (linetype == 'Point'):
+                dotSize = 'As Layer'
+            else:
+                dotSize = 'Standard'
+            mdl.setData(mdl.index(temp.row(), 6, QModelIndex()), dotSize)
+            PlottingTool().changeDataPlotSize(wdg, plotlibrary, mdl, layer, dotSize, name)
+        elif index1.column() == 7:  
+            name = ("%s#%d") % (mdl.item(index1.row(),2).data(QtCore.Qt.EditRole), mdl.item(index1.row(),3).data(QtCore.Qt.EditRole))
+            dotColor = mdl.index(index1.row(),7).data()
+            linetype = mdl.index(index1.row(),5).data()
+            if (dotColor == 'Selected') & (linetype == 'Point'):
+                dotColor = 'As Layer'
+            else:
+                dotColor = 'Selected'
+            mdl.setData(mdl.index(temp.row(), 7, QModelIndex()), dotColor)
+            PlottingTool().changeDataPlotColor(wdg, plotlibrary, mdl, layer, dotColor, name)
+        elif False and index1.column() == 8:
             #name = mdl.item(index1.row(),2).data(Qt.EditRole)
-            name = mdl.item(index1.row(),4).data(QtCore.Qt.EditRole)
+            name = mdl.item(index1.row(),8).data(QtCore.Qt.EditRole)
             print(name)
 
         else:

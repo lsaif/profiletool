@@ -3,6 +3,7 @@
 #
 # Profile
 # Copyright (C) 2012  Patrice Verchere
+# Copyright (C) 2021  Luthfi Saifudin
 #-----------------------------------------------------------
 #
 # licensed under the terms of GNU GPL 2
@@ -27,6 +28,7 @@ import os
 from qgis.core import *
 from qgis.gui import *
 import qgis
+import matplotlib
 
 from qgis.PyQt.QtCore import *
 from qgis.PyQt.QtGui import *
@@ -201,7 +203,10 @@ class PlottingTool:
                 #case line outside the raster
                 y = np.array(profile["plot_y"], dtype=np.float)  #replace None value by np.nan
                 x = np.array(profile["plot_x"])
-                wdg.plotWdg.plot(x, y, pen=pg.mkPen( model1.item(i,1).data(Qt.BackgroundRole),  width=2) , name = tmp_name)
+                if model1.index(i,5).data()=='Line':
+                    wdg.plotWdg.plot(x, y, pen=pg.mkPen( model1.item(i,1).data(Qt.BackgroundRole),  width=2) , name = tmp_name)
+                else:
+                    wdg.plotWdg.plot(x, y, pen=None, symbol='o', symbolSize=6, symbolPen=pg.mkPen( model1.item(i,1).data(Qt.BackgroundRole),  width=1), symbolBrush= pg.mkBrush( model1.item(i,1).data(Qt.BackgroundRole),  width=2), name = tmp_name)
                 #set it visible or not
                 for item in wdg.plotWdg.getPlotItem().listDataItems():
                     if item.name() == tmp_name:
@@ -369,13 +374,18 @@ class PlottingTool:
 
 
 
-    def changeColor(self,wdg, library, color1, name):                    #Action when clicking the tableview - color
+    def changeColor(self,wdg, library, model1, color1, name):                    #Action when clicking the tableview - color
 
         if library == "PyQtGraph":
             pitems = wdg.plotWdg.getPlotItem()
             for i, item in enumerate(pitems.listDataItems()):
                 if item.name() == name:
-                    item.setPen( color1,  width=2)
+                    if model1.item(i,5).data()=='Line':
+                        item.setPen( color1,  width=2)
+                    else:
+                        item.setPen(None)
+                        item.setSymbolPen(pg.mkPen(color1,  width=1))
+                        item.setSymbolBrush(pg.mkBrush(color1,  width=2))
 
         if library == "Qwt5":
             temp1 = wdg.plotWdg.itemList()
@@ -434,7 +444,100 @@ class PlottingTool:
                     wdg.plotWdg.draw()
 
                     break
+    def changeDataPlot(self,wdg, library, model1, linetype, name):                    #Action when clicking the tableview - color
 
+        if library == "PyQtGraph":
+            pitems = wdg.plotWdg.getPlotItem()
+            for i, item in enumerate(pitems.listDataItems()):
+                if item.name() == name:
+                    if linetype=='Line':
+                        item.setPen(model1.item(i,1).data(Qt.BackgroundRole),  width=2)
+                        item.setSymbol(None)
+                    else:
+                        item.setPen(None)
+                        item.setSymbol('o')
+                        item.setSymbolSize(6)
+                        item.setSymbolPen(pg.mkPen( model1.item(i,1).data(Qt.BackgroundRole),  width=1))
+                        item.setSymbolBrush(pg.mkBrush( model1.item(i,1).data(Qt.BackgroundRole),  width=2))
+
+        if library == "Qwt5":
+            temp1 = wdg.plotWdg.itemList()
+            for i in range(len(temp1)):
+                if name == str(temp1[i].title().text()):
+                    curve = temp1[i]
+                    curve.setPen(QPen(color1, 3))
+                    wdg.plotWdg.replot()
+                    # break  # Don't break as there may be multiple curves with a common name (segments separated with None values)
+
+        if library == "Matplotlib":
+            temp1 = wdg.plotWdg.figure.get_axes()[0].get_lines()
+            for i in range(len(temp1)):
+                if name == str(temp1[i].get_gid()):
+                    temp1[i].set_color((color1.red() / 255.0 , color1.green() / 255.0 , color1.blue() / 255.0 ,  color1.alpha() / 255.0 ))
+                    wdg.plotWdg.figure.get_axes()[0].redraw_in_frame()
+                    wdg.plotWdg.figure.canvas.draw()
+                    wdg.plotWdg.draw()
+                    break
+
+    def changeDataPlotSize(self,wdg, library, model1, layer1, plotsize, name):                    #Action when clicking the tableview - plot size
+        renderer = layer1.renderer()
+        '''if int(QtCore.QT_VERSION_STR[0]) == 4 :    #qgis2
+            fields = [field.name() for field in layer1.fields()]
+        elif int(QtCore.QT_VERSION_STR[0]) == 5 :    #qgis3
+            fields = [field.name() for field in layer1.fields()]'''
+        if library == "PyQtGraph":
+            pitems = wdg.plotWdg.getPlotItem()
+            for i, item in enumerate(pitems.listDataItems()):
+                if item.name() == name:
+                    if plotsize=='Standard':
+                        item.setSymbolSize(6)
+                    else:
+                        if renderer.type()=='singleSymbol':
+                            size1 = renderer.symbol().size()
+                            item.setSymbolSize(size1)
+                        '''elif renderer.type()=='categorizedSymbol':
+                            filter1 = renderer.classAttribute()
+                            val = float(layer1.getFeature(i)[fields.index(filter1)])
+                            for cat in renderer.categories():
+                                size1 = cat.symbol().size()
+                                if val == cat.value():
+                                    item.setSymbolSize(size1)
+                        elif renderer.type()=='graduatedSymbol':
+                            item.setSymbolSize(6)'''
+
+    def changeDataPlotColor(self,wdg, library, model1, layer1, plotsize, name):                    #Action when clicking the tableview - plot size
+        renderer = layer1.renderer()
+        '''val = layer1.getFeatures()
+        a = []
+        for v in val:
+            attrs = v.attributes()
+            a.append(attrs)
+        if int(QtCore.QT_VERSION_STR[0]) == 4 :    #qgis2
+            fields = [field.name() for field in layer1.fields()]
+        elif int(QtCore.QT_VERSION_STR[0]) == 5 :    #qgis3
+            fields = [field.name() for field in layer1.fields()]'''
+        if library == "PyQtGraph":
+            pitems = wdg.plotWdg.getPlotItem()
+            for i, item in enumerate(pitems.listDataItems()):
+                if item.name() == name:
+                    if plotsize=='Selected':
+                        item.setSymbolPen(pg.mkPen( model1.item(i,1).data(Qt.BackgroundRole),  width=1))
+                        item.setSymbolBrush(pg.mkBrush( model1.item(i,1).data(Qt.BackgroundRole),  width=2))
+                    else:
+                        if renderer.type()=='singleSymbol':
+                            color1 = renderer.symbol().color()
+                            item.setSymbolPen(pg.mkPen(color1,  width=1))
+                            item.setSymbolBrush(pg.mkBrush(color1,  width=2))
+                        '''elif renderer.type()=='categorizedSymbol':
+                            filter1 = renderer.classAttribute()
+                            val = float(a[i][fields.index(filter1)])
+                            for cat in renderer.categories():
+                                color1 = cat.symbol().color()
+                                if val == cat.value():
+                                    item.setSymbolPen(pg.mkPen(color1,  width=1))
+                                    item.setSymbolBrush(pg.mkBrush(color1,  width=2))
+                        elif renderer.type()=='graduatedSymbol':
+                            item.setSymbolSize(6)'''
 
     def manageMatplotlibAxe(self, axe1):
         axe1.grid()
