@@ -1,18 +1,10 @@
-# Profile Tool ![image](https://github.com/PANOimagen/profiletool/blob/master/icons/profileIcon.png?raw=true)
+# Profile Tool - Point ![image](https://github.com/PANOimagen/profiletool/blob/master/icons/profileIcon.png?raw=true)
 
 This tool plots profile lines from raster layers or point vector layer with elevation field. 
 Supports multiple lines as well as graph export to svg, pdf, png or csv file. 
-Supports 3D polyline export to dxf. 
+Supports 3D polyline export to dxf. Supports point data plot.
 
-**Authors:** Borys Jurgiel - Patrice Verchere - Etienne Tourigny - Javier Becerra
-
-**Current mantainer:** PANOimagen S.L.
-
-**email:** *javier@panoimagen.com*
-
-Fork of etiennesky/profiletool QGis plugin. We add support to select all 
-the features in a Layer and visualization of slope profile in addition to height profile. 
-This work has been partially funded by the C.A. La Rioja
+Fork of PANOimagen/profiletool QGis plugin. We add support to plot point data in profiles and enable user to set color and size preferences. These options (color and size preferences) only works for single symbol symbology. To activate the menu, please click on 'Data Type' column on which the plotting type will change 'Line' or 'Point'. Please do the same for 'Size' and 'Color' column to set them 'As Layer' or 'Selected' (symbols are pre-assigned). The work to adjust symbol as mapview in category and graduted symbol still in progress.
 
 **Profile Tool license:**
 
