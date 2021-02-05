@@ -178,10 +178,10 @@ class ProfileToolCore(QWidget):
 
         #calculate profiles
         for i in range(0 , self.dockwidget.mdl.rowCount()):
-            self.profiles.append( {"layer": self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole) } )
+            self.profiles.append( {"layer": self.dockwidget.mdl.item(i,8).data(QtCore.Qt.EditRole) } )
             self.profiles[i]["band"] = self.dockwidget.mdl.item(i,3).data(QtCore.Qt.EditRole)
             #if self.dockwidget.mdl.item(i,5).data(Qt.EditRole).type() == self.dockwidget.mdl.item(i,5).data(Qt.EditRole).VectorLayer :
-            if self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer :
+            if self.dockwidget.mdl.item(i,8).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer :
                 self.profiles[i], _, _ = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
             else:
                 if self.dockwidget.profileInterpolationCheckBox.isChecked():
@@ -217,7 +217,7 @@ class ProfileToolCore(QWidget):
         geoms = []
         for i in range(0 , self.dockwidget.mdl.rowCount()):
             #if self.dockwidget.mdl.item(i,5).data(Qt.EditRole).type() == self.dockwidget.mdl.item(i,5).data(Qt.EditRole).VectorLayer :
-            if self.dockwidget.mdl.item(i,5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer :
+            if self.dockwidget.mdl.item(i,8).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer :
                 _, buffer, multipoly = DataReaderTool().dataVectorReaderTool(self.iface, self.toolrenderer.tool, self.profiles[i], self.pointstoDraw, float(self.dockwidget.mdl.item(i,4).data(QtCore.Qt.EditRole)) )
                 geoms.append(buffer)
                 geoms.append(multipoly)
