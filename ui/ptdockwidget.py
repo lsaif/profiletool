@@ -3,6 +3,7 @@
 #
 # Profile
 # Copyright (C) 2012  Patrice Verchere
+# Copyright (C) 2021  Luthfi Saifudin
 #-----------------------------------------------------------
 #
 # licensed under the terms of GNU GPL 2
@@ -90,15 +91,15 @@ class PTDockWidget(QDockWidget, FormClass):
         #self.sbMaxVal.valueChanged.connect(self.reScalePlot)
 
         #model
-        self.mdl = QStandardItemModel(0, 6)         #the model whitch in are saved layers analysed caracteristics
+        self.mdl = QStandardItemModel(0, 9)         #the model whitch in are saved layers analysed caracteristics
         self.tableView.setModel(self.mdl)
         self.tableView.setColumnWidth(0, 20)
         self.tableView.setColumnWidth(1, 20)
         #self.tableView.setColumnWidth(2, 150)
         hh = self.tableView.horizontalHeader()
         hh.setStretchLastSection(True)
-        self.tableView.setColumnHidden(5 , True)
-        self.mdl.setHorizontalHeaderLabels(["","","Layer","Band/Field","Search buffer"])
+        self.tableView.setColumnHidden(8 , True)
+        self.mdl.setHorizontalHeaderLabels(["","","Layer","Band/Field","Search buffer","Data","Point Size","Point Color"])
         self.tableViewTool = TableViewTool()
 
         #other
@@ -342,7 +343,7 @@ class PTDockWidget(QDockWidget, FormClass):
             index = self.tableViewTool.chooseLayerForRemoval(self.iface, self.mdl)
 
         if index is not None:
-            layer = self.mdl.index(index, 4).data()
+            layer = self.mdl.index(index, 7).data()
             try:
                 layer.dataChanged.disconnect(self.refreshPlot)
             except:
@@ -367,9 +368,9 @@ class PTDockWidget(QDockWidget, FormClass):
     def _onChange(self,item):
         #print('data',self.mdl.item(item.row(),4).data(Qt.EditRole))
         #print('_onChange',self.mdl.item(item.row(),4), item.column(), self.mdl.item(item.row(),5).data(Qt.EditRole).type())
-        if (not self.mdl.item(item.row(),5) is None
-                and item.column() == 4
-                and self.mdl.item(item.row(),5).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer):
+        if (not self.mdl.item(item.row(),8) is None
+                and item.column() ==4
+                and self.mdl.item(item.row(),8).data(QtCore.Qt.EditRole).type() == qgis.core.QgsMapLayer.VectorLayer):
 
             self.profiletoolcore.plotProfil()
 
