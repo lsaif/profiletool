@@ -233,6 +233,7 @@ class TableViewTool(QtCore.QObject):
             name = ("%s#%d") % (mdl.item(index1.row(),2).data(QtCore.Qt.EditRole), mdl.item(index1.row(),3).data(QtCore.Qt.EditRole))
             color = QColorDialog().getColor(temp.data(QtCore.Qt.BackgroundRole))
             mdl.setData( mdl.index(temp.row(), 1, QModelIndex())  ,color , QtCore.Qt.BackgroundRole)
+            mdl.setData(mdl.index(temp.row(), 7, QModelIndex()), 'Selected')
             PlottingTool().changeColor(wdg, plotlibrary, mdl, color, name)
         elif index1.column() == 0:                #modifying checkbox
             #name = mdl.item(index1.row(),2).data(Qt.EditRole)
